@@ -2,9 +2,9 @@
 var express = require("express");
 var bodyParser = require("body-parser");
 var request = require("request");
-
+const redis = require("redis");
 const jwt = require("jsonwebtoken");
-
+const compressJson = require("compress-json");
 const cors = require("cors");
 const { json } = require("body-parser");
 
@@ -15,6 +15,8 @@ var app = express();
 var port = 3000;
 
 var clientId = "jri29ztrostnximn6n29nnypngtdm6";
+
+var channelId;
 
 /* The encoded key version and the decoded  version of the shared secret*/
 const key = "2Jrgbi6BRo56wJVSZJ3wDr3mveeaNe1uscDNRB4IlEE=";
@@ -63,7 +65,7 @@ function makeAndSignServerToken(channelId) {
   return jwt.sign(payload, secret, { algorithm: "HS256" });
 }
 
-function broadcastMessage(value,channelId) {
+function broadcastMessage(value) {
   // Set the HTTP headers required by the Twitch API.
   const headers = {
     "Client-Id": clientId,
@@ -98,6 +100,37 @@ function broadcastMessage(value,channelId) {
 // POST: verify the auth token and header coming from client
 app.post("/auth", (req, res) => {
   const payload = verifyAndDecode(req.headers.authorization);
-  var { channel_id: channelId, opaque_user_id: opaqueUserId } = payload;
-  broadcastMessage("ping",payload.channel_id);
+  channelId = payload.channel_id;
+  broadcastMessage("ping");
+  fetchMetadata();
 });
+
+
+//REDIS STUFF
+const redisPass = "cmuludolab";
+const redisURI = "3.134.90.98";
+const redisPort = 6379;
+let isRedisConnected = false;
+var client;
+(async () => {
+  client = redis.createClient({
+    url: `redis://default:${redisPass}@${redisURI}:${redisPort}`,
+  });
+
+  client.on("error", (err) => console.log("Redis Client Error", err));
+  await client.connect();
+  console.log("Redis Connected!")
+  isRedisConnected = true;
+})();
+ 
+async function fetchMetadata(){
+  if (isRedisConnected){
+    await client.get('latest').then((value) =>{
+      parsedValue = JSON.parse(value);
+      var jsonSubset = {"game_secs": parsedValue["game_secs"],"frame_num":parsedValue["frame_num"],
+      "key":parsedValue["key"]}
+      broadcastMessage(JSON.stringify(jsonSubset));
+      });
+  }
+}
+
