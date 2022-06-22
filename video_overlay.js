@@ -10,6 +10,7 @@ twitch.onContext((context) => {
 });
 
 
+/** Listener for the metadata broadcast from EBS */
 twitch.listen('broadcast', (target, contentType, message) => {
         if (isAuthed) {
             console.log(message);
@@ -18,14 +19,14 @@ twitch.listen('broadcast', (target, contentType, message) => {
         }
     }
 );
+
 // onAuthorized callback called each time JWT is fired
 twitch.onAuthorized((auth) => {
   // save our credentials
   token = auth.token;  
   userId = auth.userId;
   isAuthed = true; 
-
-  
+ 
   //ajax call that passes the JWT to the EBS along with authorized token and userId
   $.ajax({
       type: 'POST',
@@ -34,5 +35,20 @@ twitch.onAuthorized((auth) => {
       contentType: 'application/json',
       headers: { authorization: 'Bearer ' + window.Twitch.ext.viewer.sessionToken },
   });
-  
+//   setInterval(getMetaData, 1000/6);
 });
+
+// UNCOMMENT TO GET METADATA WITHOUT PUBSUB
+// function getMetaData(){
+//       //ajax call that passes the JWT to the EBS along with authorized token and userId
+//       $.ajax({
+//           type: 'GET',
+//           url: location.protocol + '//localhost:3000/data',
+//           contentType: 'application/json',
+//           headers: { authorization: 'Bearer ' + window.Twitch.ext.viewer.sessionToken},
+//           success: function(res) {
+//               console.log(res);
+//           } 
+//       });
+
+// }

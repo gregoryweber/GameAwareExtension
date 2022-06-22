@@ -32,12 +32,12 @@ app.use(
   })
 );
 
-/* Express Step 2: Start Server */
+/* Express Start Server */
 app.listen(port, () => {
   console.log("Server listening on port " + port);
 });
 
-// Express Step 3: Use body-parser library to help parse incoming request bodies
+// Use body-parser library to help parse incoming request bodies
 app.use(bodyParser.json());
 
 //The start of the header string coming from the onAuthorized callback in the client
@@ -55,7 +55,7 @@ function verifyAndDecode(header) {
   }
 }
 
-// Create and return a JWT for use by this service.
+/* Create and return a JWT for use by PubSub.*/
 function makeAndSignServerToken(channelId) {
   const payload = {
     exp: Math.floor(Date.now() / 1000) + 30,
@@ -69,6 +69,7 @@ function makeAndSignServerToken(channelId) {
   return jwt.sign(payload, secret, { algorithm: "HS256" });
 }
 
+/*Function that uses PubSub to broadcast value to all viewers of a channel */
 function broadcastMessage(value) {
   // Set the HTTP headers required by the Twitch API.
   const headers = {
@@ -95,7 +96,7 @@ function broadcastMessage(value) {
       if (err) {
         console.log("ERROR WITH API POST" + err);
       } else {
-        console.log(res.statusCode);
+        // console.log(res.statusCode);
       }
     }
   );
@@ -104,18 +105,31 @@ function broadcastMessage(value) {
 // POST: verify the auth token and header coming from client
 app.post("/auth", (req, res) => {
   const payload = verifyAndDecode(req.headers.authorization);
-  channelId = payload.channel_id;
-  broadcastMessage("ping");
-  setInterval(fetchMetadata, 1000)
+  channelId = payload.channel_id; // Get the channel ID after verifying the JWT is coming from a Twitch user
+  broadcastMessage("ping"); // PubSub initial ping message
+  setInterval(fetchMetadata, 1000) // After authentication is done, fetch metadata from Redis every second
 });
 
+/* This get request is a PubSub alternative, after decoding the JWT, 
+send the populated metadata variable as a response */
+app.get("/data", (req, res) =>{
+  const payload = verifyAndDecode(req.headers.authorization);
+  if(metaData){
+    res.send(metaData);
+  }
+  else{
+    res.send("no data");
+  }
+});
 
 //REDIS STUFF
 const redisPass = "cmuludolab";
-const redisURI = "3.134.90.98";
+const redisURI = "3.143.251.104";
 const redisPort = 6379;
 let isRedisConnected = false;
 var client;
+
+// Note that the redis module recommends using JS Promises and async syntax to communicate with the database
 (async () => {
   client = redis.createClient({
     url: `redis://default:${redisPass}@${redisURI}:${redisPort}`,
@@ -124,15 +138,16 @@ var client;
   client.on("error", (err) => console.log("Redis Client Error", err));
   await client.connect();
   console.log("Redis Connected!")
-  isRedisConnected = true;
+  isRedisConnected = true; // After await is finished, confirm reddis connection
 })();
- 
+
+var metaData;
 async function fetchMetadata(){
   if (isRedisConnected){
     await client.get('latest').then((value) =>{
-      parsedValue = JSON.parse(value);
-      var jsonSubset = {"game_secs": parsedValue["game_secs"],"frame_num":parsedValue["frame_num"],
-      "key":parsedValue["key"]}
+      metaData = JSON.parse(value);
+      var jsonSubset = {"game_secs": metaData["game_secs"],"frame_num":metaData["frame_num"],
+      "key":metaData["key"]} // This variable only takes the keyframes from the metadata since PubSub has a limited message size
       broadcastMessage(JSON.stringify(jsonSubset));
       });
   }
