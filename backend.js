@@ -14,17 +14,21 @@ var app = express();
 // set port for express app
 var port = 3000;
 
+// Unique Client ID of the extension. This can be found on the Twitch Developer Console onling
 var clientId = "jri29ztrostnximn6n29nnypngtdm6";
 
+// ID of the streamer's channel that has the extension installed. This is populated after authentication
 var channelId;
 
-/* The encoded key version and the decoded  version of the shared secret*/
+/* The encoded key version and the decoded  version of the shared secret. This is needed to sign the 
+JWT in the request headers*/
 const key = "2Jrgbi6BRo56wJVSZJ3wDr3mveeaNe1uscDNRB4IlEE=";
 secret = Buffer.from(key, "base64");
 
+// Asking CORS to whitelist the URL that the front end is served from
 app.use(
   cors({
-    origin: "http://127.0.0.1:8080",
+    origin: "http://127.0.0.1:8080", // Update this with front end server
   })
 );
 
@@ -102,7 +106,7 @@ app.post("/auth", (req, res) => {
   const payload = verifyAndDecode(req.headers.authorization);
   channelId = payload.channel_id;
   broadcastMessage("ping");
-  fetchMetadata();
+  setInterval(fetchMetadata, 1000)
 });
 
 
