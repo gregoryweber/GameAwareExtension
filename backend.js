@@ -124,7 +124,7 @@ app.get("/data", (req, res) =>{
 
 //REDIS STUFF
 const redisPass = "cmuludolab";
-const redisURI = "3.143.251.104";
+const redisURI = "18.219.114.253";
 const redisPort = 6379;
 let isRedisConnected = false;
 var client;

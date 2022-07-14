@@ -1,9 +1,11 @@
 {
   "dependencies": {
+    "babel-preset-react": "^6.24.1",
     "body-parser": "^1.20.0",
     "compress-json": "^2.0.1",
     "cors": "^2.8.5",
     "express": "^4.18.1",
+    "http-server": "^14.1.1",
     "jsonwebtoken": "^8.5.1",
     "nodemon": "^2.0.16",
     "redis": "^4.1.0",
