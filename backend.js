@@ -14,16 +14,16 @@ var app = express();
 // set port for express app
 var port = 3000;
 
-// Unique Client ID of the extension. This can be found on the Twitch Developer Console onling
-var clientId = "jri29ztrostnximn6n29nnypngtdm6";
+// // Unique Client ID of the extension. This can be found on the Twitch Developer Console onling
+// var clientId = "jri29ztrostnximn6n29nnypngtdm6";
 
-// ID of the streamer's channel that has the extension installed. This is populated after authentication
-var channelId;
+// // ID of the streamer's channel that has the extension installed. This is populated after authentication
+// var channelId;
 
 /* The encoded key version and the decoded  version of the shared secret. This is needed to sign the 
 JWT in the request headers*/
-const key = "2Jrgbi6BRo56wJVSZJ3wDr3mveeaNe1uscDNRB4IlEE=";
-secret = Buffer.from(key, "base64");
+// const key = "2Jrgbi6BRo56wJVSZJ3wDr3mveeaNe1uscDNRB4IlEE=";
+// secret = Buffer.from(key, "base64");
 
 // Asking CORS to whitelist the URL that the front end is served from
 app.use(
@@ -41,79 +41,78 @@ app.listen(port, () => {
 app.use(bodyParser.json());
 
 //The start of the header string coming from the onAuthorized callback in the client
-const bearerPrefix = "Bearer ";
+// const bearerPrefix = "Bearer ";
 
 /** Function that takes the header from the post request and verifies that the JWT shares the same secret as the extension*/
-function verifyAndDecode(header) {
-  if (header.startsWith(bearerPrefix)) {
-    try {
-      let [type, auth] = header.split(" ");
-      return jwt.verify(auth, secret, { algorithms: ["HS256"] });
-    } catch (e) {
-      return console.log("Invalid JWT" + e);
-    }
-  }
-}
+// function verifyAndDecode(header) {
+//   if (header.startsWith(bearerPrefix)) {
+//     try {
+//       let [type, auth] = header.split(" ");
+//       return jwt.verify(auth, secret, { algorithms: ["HS256"] });
+//     } catch (e) {
+//       return console.log("Invalid JWT" + e);
+//     }
+//   }
+// }
 
-/* Create and return a JWT for use by PubSub.*/
-function makeAndSignServerToken(channelId) {
-  const payload = {
-    exp: Math.floor(Date.now() / 1000) + 30,
-    channel_id: channelId,
-    user_id: "Noor_hammad", // extension owner ID for the call to Twitch PubSub
-    role: "external",
-    pubsub_perms: {
-      send: ["*"],
-    },
-  };
-  return jwt.sign(payload, secret, { algorithm: "HS256" });
-}
+// /* Create and return a JWT for use by PubSub.*/
+// function makeAndSignServerToken(channelId) {
+//   const payload = {
+//     exp: Math.floor(Date.now() / 1000) + 30,
+//     channel_id: channelId,
+//     user_id: "Noor_hammad", // extension owner ID for the call to Twitch PubSub
+//     role: "external",
+//     pubsub_perms: {
+//       send: ["*"],
+//     },
+//   };
+//   return jwt.sign(payload, secret, { algorithm: "HS256" });
+// }
 
-/*Function that uses PubSub to broadcast value to all viewers of a channel */
-function broadcastMessage(value) {
-  // Set the HTTP headers required by the Twitch API.
-  const headers = {
-    "Client-Id": clientId,
-    "Content-Type": "application/json",
-    "Authorization": bearerPrefix + makeAndSignServerToken(channelId),
-  };
+// /*Function that uses PubSub to broadcast value to all viewers of a channel */
+// function broadcastMessage(value) {
+//   // Set the HTTP headers required by the Twitch API.
+//   const headers = {
+//     "Client-Id": clientId,
+//     "Content-Type": "application/json",
+//     "Authorization": bearerPrefix + makeAndSignServerToken(channelId),
+//   };
 
-  // Create the POST body for the Twitch API request.
-  const body = JSON.stringify({
-    message: value,
-    broadcaster_id: channelId,
-    target: ["broadcast"]
-  });
-  // Send the broadcast request to the Twitch API.
-  request(
-    `https://api.twitch.tv/helix/extensions/pubsub`,
-    {
-      method: "POST",
-      headers,
-      body
-    },
-    (err, res) => {
-      if (err) {
-        console.log("ERROR WITH API POST" + err);
-      } else {
-        // console.log(res.statusCode);
-      }
-    }
-  );
-}
+//   // Create the POST body for the Twitch API request.
+//   const body = JSON.stringify({
+//     message: value,
+//     broadcaster_id: channelId,
+//     target: ["broadcast"]
+//   });
+//   // Send the broadcast request to the Twitch API.
+//   request(
+//     `https://api.twitch.tv/helix/extensions/pubsub`,
+//     {
+//       method: "POST",
+//       headers,
+//       body
+//     },
+//     (err, res) => {
+//       if (err) {
+//         console.log("ERROR WITH API POST" + err);
+//       } else {
+//         // console.log(res.statusCode);
+//       }
+//     }
+//   );
+// }
 
 // POST: verify the auth token and header coming from client
-app.post("/auth", (req, res) => {
-  const payload = verifyAndDecode(req.headers.authorization);
-  channelId = payload.channel_id; // Get the channel ID after verifying the JWT is coming from a Twitch user
-  broadcastMessage("ping"); // PubSub initial ping message
-  setInterval(fetchMetadata, 1000) // After authentication is done, fetch metadata from Redis every second
-});
+// app.post("/auth", (req, res) => {
+//   const payload = verifyAndDecode(req.headers.authorization);
+//   channelId = payload.channel_id; // Get the channel ID after verifying the JWT is coming from a Twitch user
+//   broadcastMessage("ping"); // PubSub initial ping message
+// });
 
 /* This get request is a PubSub alternative, after decoding the JWT, 
 send the populated metadata variable as a response */
 app.get("/data", (req, res) =>{
-  const payload = verifyAndDecode(req.headers.authorization);
+  // const payload = verifyAndDecode(req.headers.authorization);
   if(metaData){
     res.send(metaData);
   } 
@@ -139,6 +138,8 @@ var client;
   await client.connect();
   console.log("Redis Connected!")
   isRedisConnected = true; // After await is finished, confirm reddis connection
+  setInterval(fetchMetadata, 1000) // After authentication is done, fetch metadata from Redis every second
+
 })();
 
 var metaData;
