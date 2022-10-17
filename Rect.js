@@ -1,12 +1,17 @@
-import {worldModel} from 'video_overlay.js';
+  // Create state
+
+  var state = {
+    xoffset: 500,
+    yoffset: 0,
+    delta: 10,
+  };
 function Rect() {
     return  <div style={{
         width:'50px', 
         height:'50px', 
-        border:'1px solid #000', 
-        color:'white', 
+        border:'5px solid red', 
         position:'absolute',
-        // margin-left:worldModel["RedWalker"]
+        marginLeft: --state.xoffset + 'px',
 
     }}></div>;
 }

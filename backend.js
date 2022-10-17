@@ -116,7 +116,7 @@ app.get("/data", (req, res) =>{
   const payload = verifyAndDecode(req.headers.authorization);
   if(metaData){
     res.send(metaData);
-  }
+  } 
   else{
     res.send("no data");
   }
@@ -124,7 +124,7 @@ app.get("/data", (req, res) =>{
 
 //REDIS STUFF
 const redisPass = "cmuludolab";
-const redisURI = "18.219.114.253";
+const redisURI = "3.16.44.172";
 const redisPort = 6379;
 let isRedisConnected = false;
 var client;
@@ -148,7 +148,7 @@ async function fetchMetadata(){
       metaData = JSON.parse(value);
       var jsonSubset = {"game_secs": metaData["game_secs"],"frame_num":metaData["frame_num"],
       "key":metaData["key"]} // This variable only takes the keyframes from the metadata since PubSub has a limited message size
-      broadcastMessage(JSON.stringify(jsonSubset));
+      // broadcastMessage(JSON.stringify(jsonSubset));
       });
   }
 }
