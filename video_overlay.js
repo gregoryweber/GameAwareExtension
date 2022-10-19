@@ -51,6 +51,7 @@ function updateWorldModel(frame){
     thenTime = Date.now();
     startTime = thenTime;
     window.requestAnimationFrame(gameLoop);
+    // console.log(worldModel);
 }
 
 function gameLoop(){
@@ -59,9 +60,11 @@ function gameLoop(){
 
     if (elapsedTime > fpsInterval && counter < 24){
         thenTime = nowTime - (elapsedTime % fpsInterval);
+        // console.log(frameHolder);
         for (var tweenKey in frameHolder["tweens"][counter]){
             if(tweenKey != "game_time" && tweenKey !="dt"){
                 worldModel[tweenKey]["screenRect"] = frameHolder["tweens"][counter][tweenKey]["screenRect"];
+                // console.log(worldModel[tweenKey]);
             }
         }
         root.render(<Rect />)
@@ -75,16 +78,16 @@ function gameLoop(){
 function Rect() {
         let xOffset = 0;
         let yOffset = 0;
-         if (worldModel['YellowWalker']['screenRect']['x'] != null){
-            xOffset = worldModel['RedWalker']['screenRect']['x']/100;
-            yOffset = worldModel['RedWalker']['screenRect']['y']/100;
+         if (worldModel['GreenWalker']['screenRect']['x'] != null){
+            xOffset = worldModel['GreenWalker']['screenRect']['x']/100;
+            yOffset = worldModel['GreenWalker']['screenRect']['y']/100;
         }
         return  <div style={{
             width:'50px', 
             height:'50px', 
             border:'5px solid red', 
             position:'absolute',
-            top: --yOffset+'%',
+            bottom: --yOffset+'%',
             left: --xOffset +'%',
     
         }}></div>;
