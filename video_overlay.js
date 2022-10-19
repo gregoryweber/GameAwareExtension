@@ -4,51 +4,93 @@ var token, userId;
 const twitch = window.Twitch.ext;
 
 let isAuthed = false;
+
 // callback called when context of an extension is fired 
 twitch.onContext((context) => {
-//   console.log(context);
+//   console.log(context.hlsLatencyBroadcaster);
 });
 
+var worldModel = {};
 
-/** Listener for the metadata broadcast from EBS */
-twitch.listen('broadcast', (target, contentType, message) => {
-        if (isAuthed) {
-            console.log(message);
-        } else {
-            //ignore as not authed
-        }
-    }
-);
 
-// onAuthorized callback called each time JWT is fired
+// onAuthorized callback called each time viewer is authorized
 twitch.onAuthorized((auth) => {
-  // save our credentials
-  token = auth.token;  
-  userId = auth.userId;
-  isAuthed = true; 
- 
-  //ajax call that passes the JWT to the EBS along with authorized token and userId
-  $.ajax({
-      type: 'POST',
-      url: location.protocol + '//localhost:3000/auth',
-      data: JSON.stringify({authToken:token, userId: userId, channelId: auth.channelId}),
-      contentType: 'application/json',
-      headers: { authorization: 'Bearer ' + window.Twitch.ext.viewer.sessionToken },
-  });
-//   setInterval(getMetaData, 1000/6);
+  setInterval(getMetaData, 1000); // once the user is verified, start getting metadata from backend
 });
 
-// UNCOMMENT TO GET METADATA WITHOUT PUBSUB
-// function getMetaData(){
-//       //ajax call that passes the JWT to the EBS along with authorized token and userId
-//       $.ajax({
-//           type: 'GET',
-//           url: location.protocol + '//localhost:3000/data',
-//           contentType: 'application/json',
-//           headers: { authorization: 'Bearer ' + window.Twitch.ext.viewer.sessionToken},
-//           success: function(res) {
-//               console.log(res);
-//           } 
-//       });
+function getMetaData(){
+      $.ajax({
+          type: 'GET',
+          url: location.protocol + '//localhost:3000/data',
+          contentType: 'application/json',
+          headers: { authorization: 'Bearer ' + window.Twitch.ext.viewer.sessionToken},
+          success: function(res) {
+              updateWorldModel(res);
+          } 
+      });
 
-// }
+}
+
+var counter;
+var frameHolder;
+var thenTime;
+var nowTime;
+var startTime;
+var elapsedTime;
+var fps = 24.0; // TODO change this to number of items in tween array
+var fpsInterval;
+
+function updateWorldModel(frame){
+    worldModel["game_time"] = frame["game_time"];
+    for (var item in frame["key"]){
+        worldModel[item] = frame["key"][item];
+    }
+    counter = 0;
+    frameHolder = frame;
+    fpsInterval = 1000/fps;
+    thenTime = Date.now();
+    startTime = thenTime;
+    window.requestAnimationFrame(gameLoop);
+    // console.log(worldModel);
+}
+
+function gameLoop(){
+    nowTime = Date.now();
+    elapsedTime = nowTime - thenTime;
+
+    if (elapsedTime > fpsInterval && counter < 24){
+        thenTime = nowTime - (elapsedTime % fpsInterval);
+        // console.log(frameHolder);
+        for (var tweenKey in frameHolder["tweens"][counter]){
+            if(tweenKey != "game_time" && tweenKey !="dt"){
+                worldModel[tweenKey]["screenRect"] = frameHolder["tweens"][counter][tweenKey]["screenRect"];
+                // console.log(worldModel[tweenKey]);
+            }
+        }
+        root.render(<Rect />)
+        counter++;
+    }
+    else if (counter >= 24){
+        counter = 0;
+    }
+    window.requestAnimationFrame(gameLoop);
+}
+function Rect() {
+        let xOffset = 0;
+        let yOffset = 0;
+         if (worldModel['GreenWalker']['screenRect']['x'] != null){
+            xOffset = worldModel['GreenWalker']['screenRect']['x']/100;
+            yOffset = worldModel['GreenWalker']['screenRect']['y']/100;
+        }
+        return  <div style={{
+            width:'50px', 
+            height:'50px', 
+            border:'5px solid red', 
+            position:'absolute',
+            bottom: --yOffset+'%',
+            left: --xOffset +'%',
+    
+        }}></div>;
+}
+const domContainer = document.querySelector('#rect_container');
+const root = ReactDOM.createRoot(domContainer);
