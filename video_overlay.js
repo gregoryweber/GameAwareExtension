@@ -4,33 +4,67 @@ var token, userId;
 const twitch = window.Twitch.ext;
 
 let isAuthed = false;
-
+let broadcastLatency;
+let game_secs;
+let clock_secs;
+let tween_rate;
+let key_rate;
 // callback called when context of an extension is fired 
 twitch.onContext((context) => {
-//   console.log(context.hlsLatencyBroadcaster);
+  broadcastLatency = context.hlsLatencyBroadcaster;
 });
 
+// TODO: change underscore variables to camelcase;
 var worldModel = {};
+var frameBuffer = [];
 
 
 // onAuthorized callback called each time viewer is authorized
 twitch.onAuthorized((auth) => {
-  setInterval(getMetaData, 1000); // once the user is verified, start getting metadata from backend
+    getStartData();
+    // setInterval(getMetaData, 1000); // once the user is verified, start getting metadata from backend
 });
 
-function getMetaData(){
+function getStartData(){
+    $.ajax({
+        type: 'GET',
+        url: location.protocol + '//localhost:3000/startData',
+        contentType: 'application/json',
+        headers: { authorization: 'Bearer ' + window.Twitch.ext.viewer.sessionToken},
+        success: function(res) {
+            game_secs = res.game_secs;
+            clock_secs = res.clock_secs;
+            key_rate = res.key_frame_rate;
+            tween_rate = res.tween_frame_rate;
+            setInterval(getLatestData, 1000);
+        } 
+    });
+
+}
+
+function getLatestData(){
       $.ajax({
           type: 'GET',
-          url: location.protocol + '//localhost:3000/data',
+          url: location.protocol + '//localhost:3000/latestData',
           contentType: 'application/json',
           headers: { authorization: 'Bearer ' + window.Twitch.ext.viewer.sessionToken},
           success: function(res) {
-              updateWorldModel(res);
+            frameBuffer.push(res);
+            // console.log(frameBuffer);
+            //   updateWorldModel(res);
           } 
       });
 
 }
 
+// function syncBuffer()
+// 1. Calculate elapsed game time
+// 2. Go through buffer array and find the correct key frame game time (based on the whole number)
+// 3. Delete everything before that index so that the synchronized index is at index 0
+// 4. Call updateWorldModel starting from index 0, will need another interval to be set so that updateWorldModel is called at key frame rate and moves on to the next index each time
+// 5. Create another five second interval call for syncBuffer so that the buffer is resynced/cleared every five seconds
+
+// TODO: Be more consistent with var/let use
 var counter;
 var frameHolder;
 var thenTime;
@@ -51,7 +85,7 @@ function updateWorldModel(frame){
     thenTime = Date.now();
     startTime = thenTime;
     window.requestAnimationFrame(gameLoop);
-    // console.log(worldModel);
+    console.log(worldModel);
 }
 
 function gameLoop(){

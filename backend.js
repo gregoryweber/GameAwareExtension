@@ -28,18 +28,31 @@ app.use(bodyParser.json());
 
 /* This get request is a PubSub alternative, 
 send the populated metadata variable as a response */
-app.get("/data", (req, res) =>{
-  if(metaData){
-    res.send(metaData);
+app.get("/startData", async(req, res) =>{
+  await fetchStartData();
+  if(startData){
+    res.send(startData);
   } 
   else{
     res.send("no data");
   }
 });
 
+/* This get request is a PubSub alternative, 
+send the populated metadata variable as a response */
+app.get("/latestData", (req, res) =>{
+  if(latestData){
+    res.send(latestData);
+  } 
+  else{
+    res.send("no data");
+  }
+});
+
+
 // REDIS STUFF
 const redisPass = "cmuludolab";
-const redisURI = "3.16.44.172";
+const redisURI = "3.144.152.239";
 const redisPort = 6379;
 let isRedisConnected = false;
 var client;
@@ -54,16 +67,25 @@ var client;
   await client.connect();
   console.log("Redis Connected!")
   isRedisConnected = true; // After await is finished, confirm reddis connection
-  setInterval(fetchMetadata, 1000) // Fetch metadata from Redis every second
+  setInterval(fetchLatestData, 1000) // Fetch metadata from Redis every second
 
 })();
 
-var metaData;
-async function fetchMetadata(){
+var startData;
+var latestData;
+async function fetchLatestData(){
   if (isRedisConnected){
     await client.get('latest').then((value) =>{
-      metaData = JSON.parse(value);
+      latestData = JSON.parse(value);
       });
   }
 }
+async function fetchStartData(){
+  if (isRedisConnected){
+    await client.get('start_frame').then((value) =>{
+      startData = JSON.parse(value);
+      });
+  }
+}
+
 
