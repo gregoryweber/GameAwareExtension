@@ -9,6 +9,8 @@ let game_secs;
 let clock_secs;
 let tween_rate;
 let key_rate;
+let screen_width;
+let screen_height;
 // callback called when context of an extension is fired 
 twitch.onContext((context) => {
   broadcastLatency = context.hlsLatencyBroadcaster;
@@ -36,6 +38,9 @@ function getStartData(){
             clock_secs = res.clock_secs;
             key_rate = res.key_frame_rate;
             tween_rate = res.tween_frame_rate;
+            screen_width = res.screen_width;
+            screen_height = res.screen_height;
+            console.log(res);
             setInterval(getLatestData, 1000);
         } 
     });
@@ -50,10 +55,26 @@ function getLatestData(){
           headers: { authorization: 'Bearer ' + window.Twitch.ext.viewer.sessionToken},
           success: function(res) {
             frameBuffer.push(res);
-            // console.log(frameBuffer);
-            //   updateWorldModel(res);
+            // console.log(res);
+              //updateWorldModel(res);
           } 
       });
+
+}
+
+function getIndexFrameData(index){
+    $.ajax({
+        type: 'GET',
+        url: location.protocol + '//localhost:3000/frameData',
+        contentType: 'application/json',
+        data:{index:index},
+        headers: { authorization: 'Bearer ' + window.Twitch.ext.viewer.sessionToken},
+        success: function(res) {
+          frameBuffer.push(res);
+          // console.log(res);
+            updateWorldModel(res);
+        } 
+    });
 
 }
 
@@ -113,15 +134,15 @@ function Rect() {
         let xOffset = 0;
         let yOffset = 0;
          if (worldModel['GreenWalker']['screenRect']['x'] != null){
-            xOffset = worldModel['GreenWalker']['screenRect']['x']/100;
-            yOffset = worldModel['GreenWalker']['screenRect']['y']/100;
+            xOffset = worldModel['GreenWalker']['screenRect']['x']/screen_width *100; //TODO divide by screen width from start frame
+            yOffset = worldModel['GreenWalker']['screenRect']['y']/screen_height *100;
         }
         return  <div style={{
             width:'50px', 
             height:'50px', 
             border:'5px solid red', 
             position:'absolute',
-            bottom: --yOffset+'%',
+            top: --yOffset+'%',
             left: --xOffset +'%',
     
         }}></div>;

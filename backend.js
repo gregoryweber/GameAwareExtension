@@ -40,7 +40,8 @@ app.get("/startData", async(req, res) =>{
 
 /* This get request is a PubSub alternative, 
 send the populated metadata variable as a response */
-app.get("/latestData", (req, res) =>{
+app.get("/latestData", async(req, res) =>{
+  await fetchLatestData();
   if(latestData){
     res.send(latestData);
   } 
@@ -49,10 +50,20 @@ app.get("/latestData", (req, res) =>{
   }
 });
 
+pp.get("/frameData", async(req, res) =>{
+  let index = req.body.data.index;
+  await fetchFrameAt(index);
+  if(indexFrameData){
+    res.send(indexFrameData);
+  } 
+  else{
+    res.send("no data");
+  }
+});
 
 // REDIS STUFF
 const redisPass = "cmuludolab";
-const redisURI = "3.144.152.239";
+const redisURI = "52.15.129.209";
 const redisPort = 6379;
 let isRedisConnected = false;
 var client;
@@ -84,6 +95,16 @@ async function fetchStartData(){
   if (isRedisConnected){
     await client.get('start_frame').then((value) =>{
       startData = JSON.parse(value);
+      });
+  }
+}
+
+// TODO: Function to get particular frame frame 
+var indexFrameData;
+async function fetchFrameAt(index){
+  if (isRedisConnected){
+    await client.get('index').then((value) =>{
+      indexFrameData = JSON.parse(value);
       });
   }
 }
