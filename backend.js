@@ -50,14 +50,14 @@ app.get("/latestData", async(req, res) =>{
 });
 
 
-app.get("/frameData", async(req, res) =>{
-  let indexFrame = req.query.index
-  let iData = await fetchFrameAt(indexFrame);
-  if(iData && iData.frame == indexFrame){
-    res.send(iData);
-  }
-  else{
-    res.send("no data");
+app.get("/initialBuffer", async(req, res) =>{
+  let latestIndex;
+  let padding = parseInt(req.query.padding);
+  await fetchLatestData().then(()=>{latestIndex = latestData.frame});
+  if (latestIndex){
+    const range = [...Array(latestIndex - (latestIndex - padding) + 1).keys()].map(x => String(x + (latestIndex - padding)));
+    let initialBuffer = await fetchFrames(range);
+    res.send(initialBuffer.map(item => JSON.parse(item)));
   }
 });
 
@@ -100,16 +100,14 @@ async function fetchStartData(){
 }
 
 // TODO: Function to get particular frame frame 
-async function fetchFrameAt(index){
-  let indexFrameData;
+async function fetchFrames(range){
+  let frames;
   if (isRedisConnected){
-    await client.get(index).then((value) =>{
-      indexFrameData = JSON.parse(value);
-      });
-  }
-  if (indexFrameData){
-    return indexFrameData;
-  }
+    frames = await client.mGet(range);
+    if(frames){
+      return frames;
+    };
+  };
 }
 
 
