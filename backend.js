@@ -3,7 +3,6 @@ var express = require("express");
 var bodyParser = require("body-parser");
 const redis = require("redis");
 const cors = require("cors");
-const { json } = require("body-parser");
 
 /* Express Step 1: Creating an express application */
 var app = express();
@@ -50,12 +49,13 @@ app.get("/latestData", async(req, res) =>{
   }
 });
 
-pp.get("/frameData", async(req, res) =>{
-  let index = req.body.data.index;
-  await fetchFrameAt(index);
-  if(indexFrameData){
-    res.send(indexFrameData);
-  } 
+
+app.get("/frameData", async(req, res) =>{
+  let indexFrame = req.query.index
+  let iData = await fetchFrameAt(indexFrame);
+  if(iData && iData.frame == indexFrame){
+    res.send(iData);
+  }
   else{
     res.send("no data");
   }
@@ -63,7 +63,7 @@ pp.get("/frameData", async(req, res) =>{
 
 // REDIS STUFF
 const redisPass = "cmuludolab";
-const redisURI = "52.15.129.209";
+const redisURI = "3.136.161.142";
 const redisPort = 6379;
 let isRedisConnected = false;
 var client;
@@ -100,12 +100,15 @@ async function fetchStartData(){
 }
 
 // TODO: Function to get particular frame frame 
-var indexFrameData;
 async function fetchFrameAt(index){
+  let indexFrameData;
   if (isRedisConnected){
-    await client.get('index').then((value) =>{
+    await client.get(index).then((value) =>{
       indexFrameData = JSON.parse(value);
       });
+  }
+  if (indexFrameData){
+    return indexFrameData;
   }
 }
 

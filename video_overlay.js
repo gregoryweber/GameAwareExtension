@@ -11,6 +11,7 @@ let tween_rate;
 let key_rate;
 let screen_width;
 let screen_height;
+let backBuffer = [];
 // callback called when context of an extension is fired 
 twitch.onContext((context) => {
   broadcastLatency = context.hlsLatencyBroadcaster;
@@ -18,12 +19,13 @@ twitch.onContext((context) => {
 
 // TODO: change underscore variables to camelcase;
 var worldModel = {};
-var frameBuffer = [];
+let forwardBuffer = [];
 
 
 // onAuthorized callback called each time viewer is authorized
 twitch.onAuthorized((auth) => {
-    getStartData();
+    getStartData(); // get the start frame and the accompanying variables
+    setUpBackBuffer(); // construct the back buffer that we will use to sync the data
     // setInterval(getMetaData, 1000); // once the user is verified, start getting metadata from backend
 });
 
@@ -40,11 +42,49 @@ function getStartData(){
             tween_rate = res.tween_frame_rate;
             screen_width = res.screen_width;
             screen_height = res.screen_height;
-            console.log(res);
-            setInterval(getLatestData, 1000);
+            // setInterval(getLatestData, 1000);
         } 
     });
 
+}
+// Initial latest frame get request to figure out current latest, used to build back buffer
+function setUpBackBuffer(){
+    let backPadding = parseInt(broadcastLatency) + 4 // pad an extra few seconds
+    let latestIndex;
+    $.ajax({
+        type: 'GET',
+        url: location.protocol + '//localhost:3000/latestData',
+        async:true,
+        contentType: 'application/json',
+        headers: { authorization: 'Bearer ' + window.Twitch.ext.viewer.sessionToken},
+        success: function(res) {
+          latestIndex = res.frame;
+        },
+        complete: function(){
+            buildBackBuffer(latestIndex, backPadding);
+        } 
+    });
+}
+
+async function buildBackBuffer(latestIndex, padding){
+    var async_requests=[];
+
+    for(var i = latestIndex - padding; i < latestIndex; i++)
+    {
+        // Push all the async requests into an array
+        async_requests.push($.ajax({
+            type: 'GET',
+            url: location.protocol + '//localhost:3000/frameData?index='+i,
+            success: function(res) {
+                backBuffer.push(res);
+            } 
+        }).then(response => response.json()));
+    }
+    
+    // when all these async requests are done, push them into the back buffer
+    $.when.apply(null, async_requests).done( function(){
+        console.log(backBuffer);
+    });
 }
 
 function getLatestData(){
@@ -53,26 +93,20 @@ function getLatestData(){
           url: location.protocol + '//localhost:3000/latestData',
           contentType: 'application/json',
           headers: { authorization: 'Bearer ' + window.Twitch.ext.viewer.sessionToken},
-          success: function(res) {
-            frameBuffer.push(res);
-            // console.log(res);
-              //updateWorldModel(res);
+          success: function(res) {        
+            forwardBuffer.push(res);
           } 
       });
 
 }
 
 function getIndexFrameData(index){
+    let urlParam = '//localhost:3000/frameData?index='+index
     $.ajax({
         type: 'GET',
-        url: location.protocol + '//localhost:3000/frameData',
-        contentType: 'application/json',
-        data:{index:index},
-        headers: { authorization: 'Bearer ' + window.Twitch.ext.viewer.sessionToken},
+        url: location.protocol + urlParam ,
         success: function(res) {
-          frameBuffer.push(res);
-          // console.log(res);
-            updateWorldModel(res);
+            backBuffer.push(res);
         } 
     });
 
