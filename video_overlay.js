@@ -5,13 +5,15 @@ const twitch = window.Twitch.ext;
 
 let isAuthed = false;
 let broadcastLatency;
-let game_secs;
-let clock_secs;
+let start_game_secs;
+let start_clock_secs;
+let latest_game_secs;
 let tween_rate;
 let key_rate;
 let screen_width;
 let screen_height;
 let initialBuffer = [];
+let currentFramePointer;
 // callback called when context of an extension is fired 
 twitch.onContext((context) => {
   broadcastLatency = context.hlsLatencyBroadcaster;
@@ -36,8 +38,8 @@ function getStartData(){
         contentType: 'application/json',
         headers: { authorization: 'Bearer ' + window.Twitch.ext.viewer.sessionToken},
         success: function(res) {
-            game_secs = res.game_secs;
-            clock_secs = res.clock_secs;
+            start_game_secs = res.game_secs;
+            start_clock_secs = res.clock_secs;
             key_rate = res.key_frame_rate;
             tween_rate = res.tween_frame_rate;
             screen_width = res.screen_width;
@@ -57,9 +59,11 @@ function setUpInitialBuffer(){
         headers: { authorization: 'Bearer ' + window.Twitch.ext.viewer.sessionToken},
         success: function(res) {
           initialBuffer = res;
+        //   console.log(initialBuffer);
         },
         complete: function(){
-           // setInterval(getLatestData, 1000);
+           setInterval(getLatestData, 1000);
+           setInterval(syncBuffer, 5000);
         } 
     });
 }
@@ -73,21 +77,35 @@ function getLatestData(){
           headers: { authorization: 'Bearer ' + window.Twitch.ext.viewer.sessionToken},
           success: function(res) {        
             forwardBuffer.push(res);
+            // console.log(res);
+            latest_game_secs = res.game_time;
           } 
       });
 
 }
 
-// function syncBuffer()
-// 1. Calculate elapsed game time
-// 2. Go through buffer array and find the correct key frame game time (based on the whole number)
-// 3. Delete everything before that index so that the synchronized index is at index 0
-// 4. Call updateWorldModel starting from index 0, will need another interval to be set so that updateWorldModel is called at key frame rate and moves on to the next index each time
-// 5. Create another five second interval call for syncBuffer so that the buffer is resynced/cleared every five seconds
+
+function syncBuffer(){
+    // console.log(latest_game_secs);
+    // console.log(broadcastLatency);
+    let keyTime = latest_game_secs - (broadcastLatency*1000);
+    // console.log(keyTime);
+    // Search initial buffer, find key within 1 second (less than 1000 ms) of the calculated keyTime
+    // Target key frame should be the same as key time if we ignore the hundreds values (only the thousands are the seconds);
+    for( let i = 0; i < initialBuffer.length; i++){
+        if(keyTime - initialBuffer[i].game_time > 0 && keyTime - initialBuffer[i].game_time < 1000){
+            currentFramePointer = i;
+        }
+    }
+    initialBuffer.push.apply(initialBuffer, forwardBuffer);
+    forwardBuffer.length = 0;
+    initialBuffer.splice(0, currentFramePointer);
+    updateWorldModel();
+}
 
 // TODO: Be more consistent with var/let use
 var counter;
-var frameHolder;
+var frameIndex;
 var thenTime;
 var nowTime;
 var startTime;
@@ -95,13 +113,13 @@ var elapsedTime;
 var fps = 24.0; // TODO change this to number of items in tween array
 var fpsInterval;
 
-function updateWorldModel(frame){
-    worldModel["game_time"] = frame["game_time"];
-    for (var item in frame["key"]){
-        worldModel[item] = frame["key"][item];
+function updateWorldModel(){
+    frameIndex = 0;
+    worldModel["game_time"] = initialBuffer[frameIndex]["game_time"];
+    for (var item in initialBuffer[frameIndex]["key"]){
+        worldModel[item] = initialBuffer[frameIndex]["key"][item];
     }
     counter = 0;
-    frameHolder = frame;
     fpsInterval = 1000/fps;
     thenTime = Date.now();
     startTime = thenTime;
@@ -115,10 +133,9 @@ function gameLoop(){
 
     if (elapsedTime > fpsInterval && counter < 24){
         thenTime = nowTime - (elapsedTime % fpsInterval);
-        // console.log(frameHolder);
-        for (var tweenKey in frameHolder["tweens"][counter]){
+        for (var tweenKey in initialBuffer[frameIndex]["tweens"][counter]){
             if(tweenKey != "game_time" && tweenKey !="dt"){
-                worldModel[tweenKey]["screenRect"] = frameHolder["tweens"][counter][tweenKey]["screenRect"];
+                worldModel[tweenKey]["screenRect"] = initialBuffer[frameIndex]["tweens"][counter][tweenKey]["screenRect"];
                 // console.log(worldModel[tweenKey]);
             }
         }
@@ -127,6 +144,7 @@ function gameLoop(){
     }
     else if (counter >= 24){
         counter = 0;
+        frameIndex++;
     }
     window.requestAnimationFrame(gameLoop);
 }
