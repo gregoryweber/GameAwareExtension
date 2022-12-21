@@ -28,7 +28,6 @@ let forwardBuffer = [];
 twitch.onAuthorized((auth) => {
     getStartData(); // get the start frame and the accompanying variables
     setUpInitialBuffer(); // construct the back buffer that we will use to sync the data
-    // setInterval(getMetaData, 1000); // once the user is verified, start getting metadata from backend
 });
 
 function getStartData(){
@@ -38,7 +37,7 @@ function getStartData(){
         contentType: 'application/json',
         headers: { authorization: 'Bearer ' + window.Twitch.ext.viewer.sessionToken},
         success: function(res) {
-            start_game_secs = res.game_secs;
+            start_game_secs = res.game_time;
             start_clock_secs = res.clock_secs;
             key_rate = res.key_frame_rate;
             tween_rate = res.tween_frame_rate;
@@ -59,11 +58,10 @@ function setUpInitialBuffer(){
         headers: { authorization: 'Bearer ' + window.Twitch.ext.viewer.sessionToken},
         success: function(res) {
           initialBuffer = res;
-        //   console.log(initialBuffer);
         },
         complete: function(){
-           setInterval(getLatestData, 1000);
-           setInterval(syncBuffer, 5000);
+            setInterval(getLatestData, 1000);
+            setInterval(syncBuffer, 5000);
         } 
     });
 }
@@ -77,8 +75,6 @@ function getLatestData(){
           headers: { authorization: 'Bearer ' + window.Twitch.ext.viewer.sessionToken},
           success: function(res) {        
             forwardBuffer.push(res);
-            // console.log(res);
-            latest_game_secs = res.game_time;
           } 
       });
 
@@ -86,10 +82,7 @@ function getLatestData(){
 
 
 function syncBuffer(){
-    // console.log(latest_game_secs);
-    // console.log(broadcastLatency);
-    let keyTime = latest_game_secs - (broadcastLatency*1000);
-    // console.log(keyTime);
+    let keyTime = Date.now() - start_clock_secs - start_game_secs
     // Search initial buffer, find key within 1 second (less than 1000 ms) of the calculated keyTime
     // Target key frame should be the same as key time if we ignore the hundreds values (only the thousands are the seconds);
     for( let i = 0; i < initialBuffer.length; i++){
@@ -110,7 +103,6 @@ var thenTime;
 var nowTime;
 var startTime;
 var elapsedTime;
-var fps = 24.0; // TODO change this to number of items in tween array
 var fpsInterval;
 
 function updateWorldModel(){
@@ -120,29 +112,35 @@ function updateWorldModel(){
         worldModel[item] = initialBuffer[frameIndex]["key"][item];
     }
     counter = 0;
-    fpsInterval = 1000/fps;
+    fpsInterval = 1000/tween_rate;
     thenTime = Date.now();
     startTime = thenTime;
     window.requestAnimationFrame(gameLoop);
-    console.log(worldModel);
 }
 
 function gameLoop(){
     nowTime = Date.now();
     elapsedTime = nowTime - thenTime;
-
-    if (elapsedTime > fpsInterval && counter < 24){
+    if (elapsedTime > fpsInterval && counter < tween_rate){
+        if (counter == 0){
+            worldModel["game_time"] = initialBuffer[frameIndex]["game_time"];
+            for (let item in initialBuffer[frameIndex]["key"]){
+                worldModel[item] = initialBuffer[frameIndex]["key"][item];
+            }
+        }
         thenTime = nowTime - (elapsedTime % fpsInterval);
-        for (var tweenKey in initialBuffer[frameIndex]["tweens"][counter]){
+        for (let tweenKey in initialBuffer[frameIndex]["tweens"][counter]){
             if(tweenKey != "game_time" && tweenKey !="dt"){
-                worldModel[tweenKey]["screenRect"] = initialBuffer[frameIndex]["tweens"][counter][tweenKey]["screenRect"];
+                if(initialBuffer[frameIndex]["tweens"][counter][tweenKey]["screenRect"]!= null){
+                    worldModel[tweenKey]["screenRect"] = initialBuffer[frameIndex]["tweens"][counter][tweenKey]["screenRect"];
+                }
                 // console.log(worldModel[tweenKey]);
             }
         }
         root.render(<Rect />)
         counter++;
     }
-    else if (counter >= 24){
+    else if (counter >= tween_rate){
         counter = 0;
         frameIndex++;
     }
@@ -152,7 +150,7 @@ function Rect() {
         let xOffset = 0;
         let yOffset = 0;
          if (worldModel['GreenWalker']['screenRect']['x'] != null){
-            xOffset = worldModel['GreenWalker']['screenRect']['x']/screen_width *100; //TODO divide by screen width from start frame
+            xOffset = worldModel['GreenWalker']['screenRect']['x']/screen_width *100; 
             yOffset = worldModel['GreenWalker']['screenRect']['y']/screen_height *100;
         }
         return  <div style={{
