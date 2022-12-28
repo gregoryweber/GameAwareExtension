@@ -38,7 +38,7 @@ function getStartData(){
         headers: { authorization: 'Bearer ' + window.Twitch.ext.viewer.sessionToken},
         success: function(res) {
             start_game_secs = res.game_time;
-            start_clock_secs = res.clock_secs;
+            start_clock_secs = res.clock_mills;
             key_rate = res.key_frame_rate;
             tween_rate = res.tween_frame_rate;
             screen_width = res.screen_width;
@@ -82,11 +82,12 @@ function getLatestData(){
 
 
 function syncBuffer(){
-    let keyTime = Date.now() - start_clock_secs - start_game_secs
+    let keyTime = Date.now() - start_clock_secs - start_game_secs - (broadcastLatency * 1000);
+    
     // Search initial buffer, find key within 1 second (less than 1000 ms) of the calculated keyTime
     // Target key frame should be the same as key time if we ignore the hundreds values (only the thousands are the seconds);
     for( let i = 0; i < initialBuffer.length; i++){
-        if(keyTime - initialBuffer[i].game_time > 0 && keyTime - initialBuffer[i].game_time < 1000){
+        if(Math.abs(keyTime - initialBuffer[i].game_time) <= 1000){
             currentFramePointer = i;
         }
     }
@@ -150,8 +151,8 @@ function Rect() {
         let xOffset = 0;
         let yOffset = 0;
          if (worldModel['GreenWalker']['screenRect']['x'] != null){
-            xOffset = worldModel['GreenWalker']['screenRect']['x']/screen_width *100; 
-            yOffset = worldModel['GreenWalker']['screenRect']['y']/screen_height *100;
+            xOffset = worldModel['RedWalker']['screenRect']['x']/screen_width *100; 
+            yOffset = worldModel['RedWalker']['screenRect']['y']/screen_height *100;
         }
         return  <div style={{
             width:'50px', 
