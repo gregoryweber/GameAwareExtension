@@ -21,6 +21,7 @@ twitch.onContext((context) => {
 
 // TODO: change underscore variables to camelcase;
 var worldModel = {};
+var isTimeToSync = false;
 let forwardBuffer = [];
 
 
@@ -49,7 +50,7 @@ function getStartData(){
 }
 // Initial latest frame get request to figure out current latest, used to build back buffer
 function setUpInitialBuffer(){
-    let backPadding = parseInt(broadcastLatency) + 4 // pad an extra few seconds
+    let backPadding = parseInt(broadcastLatency) + 3 // pad an extra few seconds
     $.ajax({
         type: 'GET',
         url: location.protocol + '//localhost:3000/initialBuffer?padding='+backPadding,
@@ -61,7 +62,8 @@ function setUpInitialBuffer(){
         },
         complete: function(){
             setInterval(getLatestData, 1000);
-            setInterval(syncBuffer, 5000);
+            setInterval(()=> isTimeToSync = true, 5000);
+            setUpGameLoop();            
         } 
     });
 }
@@ -94,7 +96,6 @@ function syncBuffer(){
     initialBuffer.push.apply(initialBuffer, forwardBuffer);
     forwardBuffer.length = 0;
     initialBuffer.splice(0, currentFramePointer);
-    updateWorldModel();
 }
 
 // TODO: Be more consistent with var/let use
@@ -106,12 +107,15 @@ var startTime;
 var elapsedTime;
 var fpsInterval;
 
-function updateWorldModel(){
+function setUpGameLoop(){
+    syncBuffer();
     frameIndex = 0;
-    worldModel["game_time"] = initialBuffer[frameIndex]["game_time"];
-    for (var item in initialBuffer[frameIndex]["key"]){
-        worldModel[item] = initialBuffer[frameIndex]["key"][item];
-    }
+    
+    // worldModel["game_time"] = initialBuffer[frameIndex]["game_time"];
+    // for (var item in initialBuffer[frameIndex]["key"]){
+    //     worldModel[item] = initialBuffer[frameIndex]["key"][item];
+    // }
+    
     counter = 0;
     fpsInterval = 1000/tween_rate;
     thenTime = Date.now();
@@ -122,22 +126,29 @@ function updateWorldModel(){
 function gameLoop(){
     nowTime = Date.now();
     elapsedTime = nowTime - thenTime;
-    if (elapsedTime > fpsInterval && counter < tween_rate){
-        if (counter == 0){
-            worldModel["game_time"] = initialBuffer[frameIndex]["game_time"];
-            for (let item in initialBuffer[frameIndex]["key"]){
-                worldModel[item] = initialBuffer[frameIndex]["key"][item];
-            }
+    
+    if (counter == 0){
+        worldModel["game_time"] = initialBuffer[frameIndex]["game_time"];
+        for (let item in initialBuffer[frameIndex]["key"]){
+            worldModel[item] = initialBuffer[frameIndex]["key"][item];
         }
-        thenTime = nowTime - (elapsedTime % fpsInterval);
+    }
+    if (elapsedTime >= fpsInterval && counter <= tween_rate){
+        if(isTimeToSync){
+            syncBuffer();
+            frameIndex = 0;
+            isTimeToSync = false;
+            counter = 0;
+        }
+        thenTime = nowTime;
         for (let tweenKey in initialBuffer[frameIndex]["tweens"][counter]){
             if(tweenKey != "game_time" && tweenKey !="dt"){
                 if(initialBuffer[frameIndex]["tweens"][counter][tweenKey]["screenRect"]!= null){
                     worldModel[tweenKey]["screenRect"] = initialBuffer[frameIndex]["tweens"][counter][tweenKey]["screenRect"];
                 }
-                // console.log(worldModel[tweenKey]);
             }
         }
+        console.log(worldModel);
         root.render(<Rect />)
         counter++;
     }
@@ -150,9 +161,9 @@ function gameLoop(){
 function Rect() {
         let xOffset = 0;
         let yOffset = 0;
-         if (worldModel['GreenWalker']['screenRect']['x'] != null){
-            xOffset = worldModel['RedWalker']['screenRect']['x']/screen_width *100; 
-            yOffset = worldModel['RedWalker']['screenRect']['y']/screen_height *100;
+         if (worldModel['RedWalker']['screenRect']['x'] != null){
+            xOffset = (worldModel['RedWalker']['screenRect']['x']/screen_width *100); 
+            yOffset = (worldModel['RedWalker']['screenRect']['y']/screen_height *100);
         }
         return  <div style={{
             width:'50px', 
