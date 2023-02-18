@@ -61,7 +61,7 @@ function setUpInitialBuffer(){
           initialBuffer = res;
         },
         complete: function(){
-            setInterval(getLatestData, 1000);
+            setInterval(getLatestData, 1/key_rate *1000);
             startGameLoop();            
         } 
     });
@@ -96,7 +96,7 @@ function syncBuffer(){
     for( let i = 0; i < initialBuffer.length; i++){
         if(Math.abs(actualTime - initialBuffer[i].game_time) <= ((1/key_rate) * 1000)){
             actualKeyPointer = i;
-            console.log("sync point found");
+            // console.log("sync point found");
             break;
         }
     }
@@ -105,7 +105,7 @@ function syncBuffer(){
         console.log("Error: no key pointer found");
         actualKeyPointer = initialBuffer.length-1;
     }
-    console.log(initialBuffer[actualKeyPointer]);
+    // console.log(initialBuffer[actualKeyPointer]);
     //ToDo: Deal with the case where there are no tweens
     for( let i = 0; i < initialBuffer[actualKeyPointer].tweens.length; i++){
         if(Math.abs(actualTime - initialBuffer[actualKeyPointer].tweens[i].game_time) <= (1/tween_rate * 1000)){
@@ -121,19 +121,23 @@ function syncBuffer(){
 
     
     initialBuffer.splice(0, actualKeyPointer);
-    
+    // console.log(initialBuffer);
     tweenIndex = actualTweenPointer;
     lastKeyTime = actualTime - initialBuffer[0].game_time;
     lastTweenTime = actualTime - initialBuffer[0].tweens[tweenIndex].game_time;
     timeToNextKey = initialBuffer[1].game_time - initialBuffer[0].game_time; 
-    timeToNextTween = initialBuffer[0].tweens[tweenIndex+1].game_time - initialBuffer[0].tweens[tweenIndex].game_time;
-
+    if(initialBuffer[0].tweens[tweenIndex+1]!=null){
+        timeToNextTween = initialBuffer[0].tweens[tweenIndex+1].game_time - initialBuffer[0].tweens[tweenIndex].game_time - tweenOffset;
+    }
+    else{
+        //todo use the key frame rate, cast to int
+        timeToNextTween = 1000 * 1000;
+    }
     keyFrameIndex = -1;
     tweenIndex = actualTweenPointer-1;
 }
 
 // TODO: Be more consistent with var/let use
-var counter;
 var frameIndex;
 var thenTime;
 var nowTime;
@@ -181,19 +185,23 @@ function startGameLoop(){
 
 }
 var keyHolder;
-
+var counter;
+var nowTime;
+var tweenOffset = 8;
 function gameLoop(){
-    let nowTime = Date.now();
-
-    if (nowTime - lastKeyTime >= timeToNextKey){
+    nowTime = Date.now();
+    counter++;
+    if(keyFrameIndex < 0 || tweenIndex >= initialBuffer[keyFrameIndex].tweens.length-1){
+    // if (nowTime - lastKeyTime >= timeToNextKey){
         keyFrameIndex++;
+        counter = 0;
         tweenIndex = -1;
-        console.log(keyFrameIndex);
+        // console.log(keyFrameIndex);
         worldModel = JSON.parse(JSON.stringify(initialBuffer[keyFrameIndex]));
         lastKeyTime = nowTime;
         lastTweenTime = nowTime;
 
-        timeToNextTween = initialBuffer[keyFrameIndex].tweens[0].game_time - initialBuffer[keyFrameIndex].game_time;
+        timeToNextTween = initialBuffer[keyFrameIndex].tweens[0].game_time - initialBuffer[keyFrameIndex].game_time - tweenOffset;
 
         if(initialBuffer[keyFrameIndex+1] != null){
             timeToNextKey = initialBuffer[keyFrameIndex+1].game_time - initialBuffer[keyFrameIndex].game_time; 
@@ -230,7 +238,7 @@ function gameLoop(){
         lastTweenTime = nowTime;
 
         if(initialBuffer[keyHolder].tweens[tweenIndex+1]!=null){
-            timeToNextTween = initialBuffer[keyHolder].tweens[tweenIndex+1].game_time - initialBuffer[keyHolder].tweens[tweenIndex].game_time
+            timeToNextTween = initialBuffer[keyHolder].tweens[tweenIndex+1].game_time - initialBuffer[keyHolder].tweens[tweenIndex].game_time - tweenOffset;
         }
         else{
             //todo use the key frame rate, cast to int
@@ -267,6 +275,14 @@ function Rect() {
         return (
             <div>
                 <p>{worldModel["game_time"]}</p>
+                <p>keyFrameIndex: {keyFrameIndex} out of {initialBuffer.length}</p> 
+                {/* <p>TweenIndex: {tweenIndex} out of {initialBuffer[keyFrameIndex].tweens.length}</p>  */}
+                <p>timeToNextKey:{timeToNextKey} || {nowTime-lastKeyTime}</p>
+                <p>Counter:{counter}</p>
+                <p>timeToNextTween:{timeToNextTween} || {nowTime - lastTweenTime}</p>
+                <p>Now time:{nowTime}</p>
+                <p>Last tween time:{lastTweenTime}</p>
+                <p>Last key time:{lastKeyTime}</p>
                 {jsonArray.map(([key, value]) => {
                     if(key!=null && value["screenRect"]!= null){
                         xOffset = value["screenRect"].x/screen_width*100;
