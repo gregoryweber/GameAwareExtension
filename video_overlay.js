@@ -50,7 +50,7 @@ function getStartData(){
 }
 // Initial latest frame get request to figure out current latest, used to build back buffer
 function setUpInitialBuffer(){
-    let backPadding = parseInt(broadcastLatency) + 3 // pad an extra few seconds
+    let backPadding = parseInt(broadcastLatency) + 3; // pad an extra few seconds
     $.ajax({
         type: 'GET',
         url: location.protocol + '//localhost:3000/initialBuffer?padding='+backPadding,
@@ -119,9 +119,8 @@ function syncBuffer(){
         actualTweenPointer = initialBuffer[actualKeyPointer].tweens.length-1;
     }
 
-    
+
     initialBuffer.splice(0, actualKeyPointer);
-    // console.log(initialBuffer);
     tweenIndex = actualTweenPointer;
     lastKeyTime = actualTime - initialBuffer[0].game_time;
     lastTweenTime = actualTime - initialBuffer[0].tweens[tweenIndex].game_time;
@@ -187,16 +186,14 @@ function startGameLoop(){
 var keyHolder;
 var counter;
 var nowTime;
-var tweenOffset = 8;
+var tweenOffset = 0;
 function gameLoop(){
     nowTime = Date.now();
     counter++;
     if(keyFrameIndex < 0 || tweenIndex >= initialBuffer[keyFrameIndex].tweens.length-1){
-    // if (nowTime - lastKeyTime >= timeToNextKey){
         keyFrameIndex++;
         counter = 0;
         tweenIndex = -1;
-        // console.log(keyFrameIndex);
         worldModel = JSON.parse(JSON.stringify(initialBuffer[keyFrameIndex]));
         lastKeyTime = nowTime;
         lastTweenTime = nowTime;
@@ -210,22 +207,7 @@ function gameLoop(){
             //TODO: Check for end frame
             syncBuffer();
         }
-    }
-
-    // if nowTime - lastKeyTime is greater than or equal to timeToNextKey
-    // //advance frame data: advance to next key
-    // current key = next key
-    // current tween = -1
-    // update world model with key data (world model = key basically)
-    // lastKeyTime = nowTime
-    // lastTweenTime = nowTime
-    // timeToNextTween = dt of the first element in the list (or tween time - key frame time)
-
-    // If there is no next key frame:
-    //     check for an end frame (if there is an end frame console log a message about end of stream)
-    //     trigger resync
-    // else:
-    //     timeToNextKey = next keyframe time - current key frame time
+    }    
     if (nowTime - lastTweenTime >= timeToNextTween){
         tweenIndex++;
         if(keyFrameIndex == -1){
@@ -245,24 +227,14 @@ function gameLoop(){
             timeToNextTween = 1000 * 1000;
         }
     }
-// if nowtime - lastTweenTime is greater than or equal to timeToNextTween   
-//     //advance frame data: advance to next tween within current key
-//     current tween = next tween
-//     update worldmodel with tween data
-//     lastTweenTime = nowTime
-    
-//     if there is a next tween:
-//         timeToNextTween = current tween dt (or next tween game time - current tween game time)
-//     else:
-//         timeToNextTween = really big number
 
-    draw();
+    // draw();
     window.requestAnimationFrame(gameLoop);
 
 }
 
 function draw(){
-    root.render(<Rect />)
+    root.render(<Rect/>)
 }
 
 function Rect() {
@@ -271,7 +243,22 @@ function Rect() {
         let width = 0;
         let height = 0;
         const jsonArray = Object.entries(worldModel["key"]);
-        // console.log(jsonArray);
+        let tooltipInfo={};
+        const [colors, setColors] = React.useState(
+            Object.fromEntries(
+              Object.keys(worldModel["key"]).map((key) => [key, "red"])
+            )
+          );
+          
+        const handleDivClick = (key) => {
+            // Create a copy of the current colors object
+            const newColors = { ...colors };
+            // Change the color of the rectangle with the given key to a random color using Math.random()
+            newColors[key] = `rgb(${Math.random() * 255}, ${Math.random() * 255}, ${Math.random() * 255})`;
+            // Set the updated colors object as the new state
+            setColors(newColors);
+          };
+          
         return (
             <div>
                 <p>{worldModel["game_time"]}</p>
@@ -281,23 +268,34 @@ function Rect() {
                 <p>Counter:{counter}</p>
                 <p>timeToNextTween:{timeToNextTween} || {nowTime - lastTweenTime}</p>
                 <p>Now time:{nowTime}</p>
-                <p>Last tween time:{lastTweenTime}</p>
-                <p>Last key time:{lastKeyTime}</p>
                 {jsonArray.map(([key, value]) => {
                     if(key!=null && value["screenRect"]!= null){
+                        tooltipInfo = Object.entries(value).map(([key, value]) => {
+                        if (typeof value === "object") {
+                            // For nested objects, use JSON.stringify to convert the object to a string
+                            // with the key-value pairs separated by a colon
+                            return `${key}: ${JSON.stringify(value)}`;
+                        } else {
+                            // For non-object values, simply use the key-value pair with a colon separator
+                            return `${key}: ${value}`;
+                        }
+                        }).join("\n");
+
                         xOffset = value["screenRect"].x/screen_width*100;
                         yOffset = value["screenRect"].y/screen_height*100;
                         width = value["screenRect"].w/screen_width*100;
                         height = value["screenRect"].h/screen_height*100;
-                        return <div key ={key} style={{
-                            width:--width+'%', 
-                            height:--height+'%', 
-                            border:'5px solid red', 
-                            position:'absolute',
-                            top: --yOffset+'%',
-                            left: --xOffset +'%',
+                        return <div onClick={()=> handleDivClick(key)} className = "tooltip"key ={key} style={{
+                                width:--width+'%', 
+                                height:--height+'%', 
+                                border:'5px solid ' + colors[key], 
+                                position:'absolute',
+                                top: --yOffset+'%',
+                                left: --xOffset +'%',
 
-                        }}></div>;
+                            }}>
+                                <span key={value["secret_name"]}className = "tooltiptext">{tooltipInfo} </span>
+                            </div>;
                     }
                 })}
             
