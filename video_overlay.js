@@ -21,9 +21,7 @@ twitch.onContext((context) => {
 
 // TODO: change underscore variables to camelcase;
 var worldModel = {};
-var isTimeToSync = false;
 let forwardBuffer = [];
-
 
 // onAuthorized callback called each time viewer is authorized
 twitch.onAuthorized((auth) => {
@@ -67,7 +65,6 @@ function setUpInitialBuffer(){
     });
 }
 
-
 function getLatestData(){
       $.ajax({
           type: 'GET',
@@ -81,16 +78,25 @@ function getLatestData(){
 
 }
 
-
 function syncBuffer(){
     console.log("sync called");
     let actualKeyPointer;
     let actualTweenPointer;
     initialBuffer.push.apply(initialBuffer, forwardBuffer);
     forwardBuffer.length = 0;
-    // ToDO: check if broadcast latency has changed
 
+    //Date.now() = current time in viewer's frame of reference
+    //start_clock_secs = local time stamp from the streamer's computer
+    //start_game_secs = Unity's frame of reference of time (all future game times are from this frame of reference)
+    //broadcastLatency = number from Twitch, latency from the streamer to the viewer
+
+
+    console.log("now time: " + Date.now());
+    console.log("start_clock_secs: " + start_clock_secs);
+    console.log("start_game_secs: " + start_game_secs);
+    console.log("broadcast latency: " + broadcastLatency)
     let actualTime = Date.now() - start_clock_secs - start_game_secs - (broadcastLatency * 1000);
+    
     // Search initial buffer, find key within 1/key_frame_rate of the calculated keyTime
     // Target key frame should be the same as key time if we ignore the hundreds values (only the thousands are the seconds);
     for( let i = 0; i < initialBuffer.length; i++){
@@ -105,10 +111,9 @@ function syncBuffer(){
         console.log("Error: no key pointer found");
         actualKeyPointer = initialBuffer.length-1;
     }
-    // console.log(initialBuffer[actualKeyPointer]);
     //ToDo: Deal with the case where there are no tweens
     for( let i = 0; i < initialBuffer[actualKeyPointer].tweens.length; i++){
-        if(Math.abs(actualTime - initialBuffer[actualKeyPointer].tweens[i].game_time) <= (1/tween_rate * 1000)){
+        if(actualTime - initialBuffer[actualKeyPointer].tweens[i].game_time <= (1/tween_rate * 1000)){
             actualTweenPointer = i;
             break;
         }
@@ -119,8 +124,11 @@ function syncBuffer(){
         actualTweenPointer = initialBuffer[actualKeyPointer].tweens.length-1;
     }
 
+    console.log("actual game time: " + actualTime);
+    console.log("time from the key: "+ initialBuffer[actualKeyPointer].game_time);
+    console.log("time from the tweens: "+ initialBuffer[actualKeyPointer].tweens[actualTweenPointer].game_time);
 
-    initialBuffer.splice(0, actualKeyPointer);
+    initialBuffer.splice(0, actualKeyPointer+1);
     tweenIndex = actualTweenPointer;
     lastKeyTime = actualTime - initialBuffer[0].game_time;
     lastTweenTime = actualTime - initialBuffer[0].tweens[tweenIndex].game_time;
@@ -132,6 +140,9 @@ function syncBuffer(){
         //todo use the key frame rate, cast to int
         timeToNextTween = 1000 * 1000;
     }
+    updateWorldModelWithKey(initialBuffer[0]);
+    updateWorldModelWithTween(initialBuffer[0].tweens[actualTweenPointer]);
+    updateSvgRects();
     keyFrameIndex = -1;
     tweenIndex = actualTweenPointer-1;
 }
@@ -139,10 +150,6 @@ function syncBuffer(){
 // TODO: Be more consistent with var/let use
 var frameIndex;
 var thenTime;
-var nowTime;
-var startTime;
-var elapsedTime;
-var fpsInterval;
 
 var lastKeyTime;
 var lastTweenTime;
@@ -150,6 +157,88 @@ var keyFrameIndex;
 var tweenIndex;
 var timeToNextKey;
 var timeToNextTween;
+var parentSvg;
+var svgElements;
+var textSvg;
+
+function initializeSvgRects(){
+    let xOffset = 0;
+    let yOffset = 0;
+    let width = 0;
+    let height = 0;  
+    parentSvg.innerHTML = '';
+    Object.entries(worldModel["key"]).forEach(([key, value]) => {
+        if (key != null && value["screenRect"] != null) {
+            xOffset = value["screenRect"].x/screen_width*100;
+            yOffset = value["screenRect"].y/screen_height*100;
+            width = value["screenRect"].w/screen_width*100;
+            height = value["screenRect"].h/screen_height*100;
+          
+            const svgRect = document.createElementNS(
+            "http://www.w3.org/2000/svg",
+            "rect"
+          );
+          svgRect.setAttribute("id", key);
+          svgRect.setAttribute("width", width.toString()+"%");
+          svgRect.setAttribute("height", height.toString()+"%");
+          svgRect.setAttribute("x", xOffset.toString()+"%");
+          svgRect.setAttribute("y", yOffset.toString()+"%");
+          svgRect.setAttribute("fill", "none");
+          svgRect.setAttribute("stroke", "red");
+          svgRect.setAttribute("stroke-width", "2");          
+          svgRect.setAttribute("position", "absolute");
+          parentSvg.appendChild(svgRect);
+          svgElements[key] = svgRect;
+        }
+      });
+
+}
+function updateSvgRects(){
+    // Update the SVG rects based on the updated values in the world model
+    let xOffset = 0;
+    let yOffset = 0;
+    let width = 0;
+    let height = 0;  
+  
+    Object.entries(worldModel["key"]).forEach(([key, value]) => {
+      if (key != null && value["screenRect"] != null) {
+        xOffset = value["screenRect"].x/screen_width*100;
+        yOffset = value["screenRect"].y/screen_height*100;
+        width = value["screenRect"].w/screen_width*100;
+        height = value["screenRect"].h/screen_height*100;
+
+        var svgRect = svgElements[key];
+        if (svgRect) {
+            svgRect.setAttribute("width", width.toString()+"%");
+            svgRect.setAttribute("height", height.toString()+"%");
+            svgRect.setAttribute("x", xOffset.toString()+"%");
+            svgRect.setAttribute("y", yOffset.toString()+"%");
+        }
+        else{
+            svgRect = document.createElementNS(
+                "http://www.w3.org/2000/svg",
+                "rect"
+              );
+            svgRect.setAttribute("id", key);
+            svgRect.setAttribute("width", width.toString()+"%");
+            svgRect.setAttribute("height", height.toString()+"%");
+            svgRect.setAttribute("x", xOffset.toString()+"%");
+            svgRect.setAttribute("y", yOffset.toString()+"%");
+            svgRect.setAttribute("fill", "none");
+            svgRect.setAttribute("stroke", "red");
+            svgRect.setAttribute("stroke-width", "2");
+            // svgRect.setAttribute("title", "This is a tooltip for "+key);       
+            svgRect.setAttribute("position", "absolute");
+            parentSvg.appendChild(svgRect);
+            svgElements[key] = svgRect;
+        }
+      }
+    });
+}
+function updateWorldModelWithKey(keyFrame){
+    worldModel = JSON.parse(JSON.stringify(keyFrame));
+
+}
 
 function updateWorldModelWithTween(tweenFrame){
     for(let item in tweenFrame){
@@ -160,7 +249,13 @@ function updateWorldModelWithTween(tweenFrame){
     worldModel["game_time"] = JSON.parse(JSON.stringify(tweenFrame["game_time"]));
 }
 
+
 function startGameLoop(){
+    parentSvg = document.getElementById("parent_svg");
+    textSvg = document.getElementById("debugging");
+
+    svgElements = {};
+
     lastKeyTime = 0;
     lastTweenTime = 0;
     keyFrameIndex = -1;
@@ -171,30 +266,32 @@ function startGameLoop(){
 
     window.requestAnimationFrame(gameLoop);
 
-// // New Game Loop Behavior (main game loop that calls functions)
-// track last key frame time (based on local scope) = 0
-// track last tween frame time = 0
-// track last resync time = 0 (not needed anymore)
-// current keyFrameIndex = 0
-// nextFrame (keyFrameIndex + 1)
-// current tween = -1
-// nextTween (current tween +1)
-// timeToNextKey = 0
-// timeToNextTween = 0
-
 }
+
+function displayOverLayDebug(){
+    // <p>{worldModel["game_time"]}</p>
+    //                 <p>keyFrameIndex: {keyFrameIndex} out of {initialBuffer.length}</p> 
+    //                 {/* <p>TweenIndex: {tweenIndex} out of {initialBuffer[keyFrameIndex].tweens.length}</p>  */}
+    //                 <p>timeToNextKey:{timeToNextKey} || {nowTime-lastKeyTime}</p>
+    //                 <p>Counter:{counter}</p>
+    //                 <p>timeToNextTween:{timeToNextTween} || {nowTime - lastTweenTime}</p>
+    //                 <p>Now time:{nowTime}</p>
+    var string = "game time: " + worldModel["game_time"]+ "<br/> keyFrameIndex: " + keyFrameIndex + "/" + initialBuffer.length + " <br/> timeToNextKey: "+  timeToNextKey + "<br/> timeToNextTween:" + timeToNextTween+" <br/> Now time:" + nowTime + "<br/> broadcast latency: " + broadcastLatency;
+    textSvg.setAttribute("y", 30);
+    textSvg.innerHTML = string;
+}
+
 var keyHolder;
 var counter;
 var nowTime;
 var tweenOffset = 0;
 function gameLoop(){
     nowTime = Date.now();
-    counter++;
     if(keyFrameIndex < 0 || tweenIndex >= initialBuffer[keyFrameIndex].tweens.length-1){
         keyFrameIndex++;
-        counter = 0;
         tweenIndex = -1;
         worldModel = JSON.parse(JSON.stringify(initialBuffer[keyFrameIndex]));
+        updateSvgRects();
         lastKeyTime = nowTime;
         lastTweenTime = nowTime;
 
@@ -218,6 +315,7 @@ function gameLoop(){
         }
         updateWorldModelWithTween(initialBuffer[keyHolder].tweens[tweenIndex]);
         lastTweenTime = nowTime;
+        updateSvgRects();
 
         if(initialBuffer[keyHolder].tweens[tweenIndex+1]!=null){
             timeToNextTween = initialBuffer[keyHolder].tweens[tweenIndex+1].game_time - initialBuffer[keyHolder].tweens[tweenIndex].game_time - tweenOffset;
@@ -227,81 +325,75 @@ function gameLoop(){
             timeToNextTween = 1000 * 1000;
         }
     }
-
-    // draw();
+    // displayOverLayDebug();
     window.requestAnimationFrame(gameLoop);
-
 }
 
-function draw(){
-    root.render(<Rect/>)
-}
-
-function Rect() {
-        let xOffset = 0;
-        let yOffset = 0;
-        let width = 0;
-        let height = 0;
-        const jsonArray = Object.entries(worldModel["key"]);
-        let tooltipInfo={};
-        const [colors, setColors] = React.useState(
-            Object.fromEntries(
-              Object.keys(worldModel["key"]).map((key) => [key, "red"])
-            )
-          );
+// function Rect() {
+//         let xOffset = 0;
+//         let yOffset = 0;
+//         let width = 0;
+//         let height = 0;
+//         const jsonArray = Object.entries(worldModel["key"]);
+//         let tooltipInfo={};
+//         const [colors, setColors] = React.useState(
+//             Object.fromEntries(
+//               Object.keys(worldModel["key"]).map((key) => [key, "red"])
+//             )
+//           );
           
-        const handleDivClick = (key) => {
-            // Create a copy of the current colors object
-            const newColors = { ...colors };
-            // Change the color of the rectangle with the given key to a random color using Math.random()
-            newColors[key] = `rgb(${Math.random() * 255}, ${Math.random() * 255}, ${Math.random() * 255})`;
-            // Set the updated colors object as the new state
-            setColors(newColors);
-          };
+//         const handleDivClick = (key) => {
+//             // Create a copy of the current colors object
+//             const newColors = { ...colors };
+//             // Change the color of the rectangle with the given key to a random color using Math.random()
+//             newColors[key] = `rgb(${Math.random() * 255}, ${Math.random() * 255}, ${Math.random() * 255})`;
+//             // Set the updated colors object as the new state
+//             setColors(newColors);
+//           };
           
-        return (
-            <div>
-                <p>{worldModel["game_time"]}</p>
-                <p>keyFrameIndex: {keyFrameIndex} out of {initialBuffer.length}</p> 
-                {/* <p>TweenIndex: {tweenIndex} out of {initialBuffer[keyFrameIndex].tweens.length}</p>  */}
-                <p>timeToNextKey:{timeToNextKey} || {nowTime-lastKeyTime}</p>
-                <p>Counter:{counter}</p>
-                <p>timeToNextTween:{timeToNextTween} || {nowTime - lastTweenTime}</p>
-                <p>Now time:{nowTime}</p>
-                {jsonArray.map(([key, value]) => {
-                    if(key!=null && value["screenRect"]!= null){
-                        tooltipInfo = Object.entries(value).map(([key, value]) => {
-                        if (typeof value === "object") {
-                            // For nested objects, use JSON.stringify to convert the object to a string
-                            // with the key-value pairs separated by a colon
-                            return `${key}: ${JSON.stringify(value)}`;
-                        } else {
-                            // For non-object values, simply use the key-value pair with a colon separator
-                            return `${key}: ${value}`;
-                        }
-                        }).join("\n");
+//         return (
+//             <div>
+//                 <p>{worldModel["game_time"]}</p>
+//                 <p>keyFrameIndex: {keyFrameIndex} out of {initialBuffer.length}</p> 
+//                 {/* <p>TweenIndex: {tweenIndex} out of {initialBuffer[keyFrameIndex].tweens.length}</p>  */}
+//                 <p>timeToNextKey:{timeToNextKey} || {nowTime-lastKeyTime}</p>
+//                 <p>Counter:{counter}</p>
+//                 <p>timeToNextTween:{timeToNextTween} || {nowTime - lastTweenTime}</p>
+//                 <p>Now time:{nowTime}</p>
+//                 {jsonArray.map(([key, value]) => {
+//                     if(key!=null && value["screenRect"]!= null){
+//                         tooltipInfo = Object.entries(value).map(([key, value]) => {
+//                         if (typeof value === "object") {
+//                             // For nested objects, use JSON.stringify to convert the object to a string
+//                             // with the key-value pairs separated by a colon
+//                             return `${key}: ${JSON.stringify(value)}`;
+//                         } else {
+//                             // For non-object values, simply use the key-value pair with a colon separator
+//                             return `${key}: ${value}`;
+//                         }
+//                         }).join("\n");
 
-                        xOffset = value["screenRect"].x/screen_width*100;
-                        yOffset = value["screenRect"].y/screen_height*100;
-                        width = value["screenRect"].w/screen_width*100;
-                        height = value["screenRect"].h/screen_height*100;
-                        return <div onClick={()=> handleDivClick(key)} className = "tooltip"key ={key} style={{
-                                width:--width+'%', 
-                                height:--height+'%', 
-                                border:'5px solid ' + colors[key], 
-                                position:'absolute',
-                                top: --yOffset+'%',
-                                left: --xOffset +'%',
+//                         xOffset = value["screenRect"].x/screen_width*100;
+//                         yOffset = value["screenRect"].y/screen_height*100;
+//                         width = value["screenRect"].w/screen_width*100;
+//                         height = value["screenRect"].h/screen_height*100;
+//                         return <div onClick={()=> handleDivClick(key)} className = "tooltip"key ={key} style={{
+//                                 width:--width+'%', 
+//                                 height:--height+'%', 
+//                                 border:'5px solid ' + colors[key], 
+//                                 position:'absolute',
+//                                 top: --yOffset+'%',
+//                                 left: --xOffset +'%',
 
-                            }}>
-                                <span key={value["secret_name"]}className = "tooltiptext">{tooltipInfo} </span>
-                            </div>;
-                    }
-                })}
+//                             }}>
+//                                 <span key={value["secret_name"]}className = "tooltiptext">{tooltipInfo} </span>
+//                             </div>;
+//                     }
+//                 })}
             
-            </div>
-        );
+//             </div>
+//         );
         
-}
-const domContainer = document.querySelector('#rect_container');
-const root = ReactDOM.createRoot(domContainer);
+// }
+// const domContainer = document.querySelector('#rect_container');
+// const root = ReactDOM.createRoot(domContainer);
