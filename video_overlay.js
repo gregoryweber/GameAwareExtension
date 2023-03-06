@@ -91,10 +91,10 @@ function syncBuffer(){
     //broadcastLatency = number from Twitch, latency from the streamer to the viewer
 
 
-    console.log("now time: " + Date.now());
-    console.log("start_clock_secs: " + start_clock_secs);
-    console.log("start_game_secs: " + start_game_secs);
-    console.log("broadcast latency: " + broadcastLatency)
+    // console.log("now time: " + Date.now());
+    // console.log("start_clock_secs: " + start_clock_secs);
+    // console.log("start_game_secs: " + start_game_secs);
+    // console.log("broadcast latency: " + broadcastLatency)
     let actualTime = Date.now() - start_clock_secs - start_game_secs - (broadcastLatency * 1000);
     
     // Search initial buffer, find key within 1/key_frame_rate of the calculated keyTime
@@ -103,7 +103,6 @@ function syncBuffer(){
         if(Math.abs(actualTime - initialBuffer[i].game_time) <= ((1/key_rate) * 1000)){
             actualKeyPointer = i;
             // console.log("sync point found");
-            break;
         }
     }
 
@@ -115,7 +114,6 @@ function syncBuffer(){
     for( let i = 0; i < initialBuffer[actualKeyPointer].tweens.length; i++){
         if(actualTime - initialBuffer[actualKeyPointer].tweens[i].game_time <= (1/tween_rate * 1000)){
             actualTweenPointer = i;
-            break;
         }
     }
 
@@ -124,27 +122,28 @@ function syncBuffer(){
         actualTweenPointer = initialBuffer[actualKeyPointer].tweens.length-1;
     }
 
-    console.log("actual game time: " + actualTime);
-    console.log("time from the key: "+ initialBuffer[actualKeyPointer].game_time);
-    console.log("time from the tweens: "+ initialBuffer[actualKeyPointer].tweens[actualTweenPointer].game_time);
+    // console.log("actual game time: " + actualTime);
+    // console.log("time from the key: "+ initialBuffer[actualKeyPointer].game_time);
+    // console.log("time from the tweens: "+ initialBuffer[actualKeyPointer].tweens[actualTweenPointer].game_time);
 
-    initialBuffer.splice(0, actualKeyPointer+1);
+    initialBuffer.splice(0, actualKeyPointer);
     tweenIndex = actualTweenPointer;
-    lastKeyTime = actualTime - initialBuffer[0].game_time;
-    lastTweenTime = actualTime - initialBuffer[0].tweens[tweenIndex].game_time;
-    timeToNextKey = initialBuffer[1].game_time - initialBuffer[0].game_time; 
-    if(initialBuffer[0].tweens[tweenIndex+1]!=null){
-        timeToNextTween = initialBuffer[0].tweens[tweenIndex+1].game_time - initialBuffer[0].tweens[tweenIndex].game_time - tweenOffset;
+    keyFrameIndex = 0;
+    lastKeyTime = actualTime - initialBuffer[keyFrameIndex].game_time;
+    lastTweenTime = actualTime - initialBuffer[keyFrameIndex].tweens[tweenIndex].game_time;
+    timeToNextKey = initialBuffer[keyFrameIndex+1].game_time - initialBuffer[keyFrameIndex].game_time; 
+    if(initialBuffer[keyFrameIndex].tweens[tweenIndex+1]!=null){
+        timeToNextTween = initialBuffer[keyFrameIndex].tweens[tweenIndex+1].game_time - initialBuffer[keyFrameIndex].tweens[tweenIndex].game_time - tweenOffset;
     }
     else{
         //todo use the key frame rate, cast to int
         timeToNextTween = 1000 * 1000;
     }
-    updateWorldModelWithKey(initialBuffer[0]);
-    updateWorldModelWithTween(initialBuffer[0].tweens[actualTweenPointer]);
+    updateWorldModelWithKey(initialBuffer[keyFrameIndex]);
+    updateWorldModelWithTween(initialBuffer[keyFrameIndex].tweens[actualTweenPointer]);
     updateSvgRects();
-    keyFrameIndex = -1;
-    tweenIndex = actualTweenPointer-1;
+    tweenIndex = actualTweenPointer - 1;
+    keyFrameIndex = keyFrameIndex - 1;
 }
 
 // TODO: Be more consistent with var/let use
@@ -161,45 +160,22 @@ var parentSvg;
 var svgElements;
 var textSvg;
 
-function initializeSvgRects(){
-    let xOffset = 0;
-    let yOffset = 0;
-    let width = 0;
-    let height = 0;  
-    parentSvg.innerHTML = '';
-    Object.entries(worldModel["key"]).forEach(([key, value]) => {
-        if (key != null && value["screenRect"] != null) {
-            xOffset = value["screenRect"].x/screen_width*100;
-            yOffset = value["screenRect"].y/screen_height*100;
-            width = value["screenRect"].w/screen_width*100;
-            height = value["screenRect"].h/screen_height*100;
-          
-            const svgRect = document.createElementNS(
-            "http://www.w3.org/2000/svg",
-            "rect"
-          );
-          svgRect.setAttribute("id", key);
-          svgRect.setAttribute("width", width.toString()+"%");
-          svgRect.setAttribute("height", height.toString()+"%");
-          svgRect.setAttribute("x", xOffset.toString()+"%");
-          svgRect.setAttribute("y", yOffset.toString()+"%");
-          svgRect.setAttribute("fill", "none");
-          svgRect.setAttribute("stroke", "red");
-          svgRect.setAttribute("stroke-width", "2");          
-          svgRect.setAttribute("position", "absolute");
-          parentSvg.appendChild(svgRect);
-          svgElements[key] = svgRect;
-        }
-      });
-
-}
 function updateSvgRects(){
     // Update the SVG rects based on the updated values in the world model
     let xOffset = 0;
     let yOffset = 0;
     let width = 0;
     let height = 0;  
-  
+    let tooltipInfo;
+
+    var textElement = document.getElementById("tooltip");
+    if(!textElement){
+        textElement = document.createElementNS("http://www.w3.org/2000/svg", "text");
+    
+        // Set the attributes of the text element
+        textElement.setAttribute("id", "tooltip");
+        parentSvg.appendChild(textElement);
+    }
     Object.entries(worldModel["key"]).forEach(([key, value]) => {
       if (key != null && value["screenRect"] != null) {
         xOffset = value["screenRect"].x/screen_width*100;
@@ -218,7 +194,7 @@ function updateSvgRects(){
             svgRect = document.createElementNS(
                 "http://www.w3.org/2000/svg",
                 "rect"
-              );
+            );
             svgRect.setAttribute("id", key);
             svgRect.setAttribute("width", width.toString()+"%");
             svgRect.setAttribute("height", height.toString()+"%");
@@ -227,8 +203,54 @@ function updateSvgRects(){
             svgRect.setAttribute("fill", "none");
             svgRect.setAttribute("stroke", "red");
             svgRect.setAttribute("stroke-width", "2");
-            // svgRect.setAttribute("title", "This is a tooltip for "+key);       
             svgRect.setAttribute("position", "absolute");
+            svgRect.style.pointerEvents = "all"; // prevent stroke from triggering mouse events
+
+            textElement.setAttribute("width", "50");
+            textElement.setAttribute("height", "50");
+            textElement.setAttribute("visibility", "hidden")
+    
+            svgRect.addEventListener("mousemove", (evt) => {
+                // Set the text content of the text element
+                textElement.textContent = "";
+          
+                var CTM = svgRect.getScreenCTM();
+                var mouseX = (evt.clientX - CTM.e) / CTM.a;
+                var mouseY = (evt.clientY - CTM.f) / CTM.d;
+                
+                tooltipInfo = Object.entries(value).map(function(entry) {
+                    var key = entry[0];
+                    var value = entry[1];
+                    if (typeof value === "object") {
+                        return key + ": " + JSON.stringify(value);
+                    } else {
+                        return key + ": " + value;
+                    }
+                }).join("\n");
+                
+                // Split the tooltip info into an array of lines
+                var tooltipLines = tooltipInfo.split("\n");
+                
+                // Create a <tspan> element for each line of text
+                tooltipLines.forEach(function(line, index) {
+                    var tspan = document.createElementNS("http://www.w3.org/2000/svg", "tspan");
+                    tspan.setAttribute("x", mouseX + 6 / CTM.a);
+                    tspan.setAttribute("dy", "1.2em"); // Line spacing
+                    tspan.textContent = line;
+                    textElement.appendChild(tspan);
+                });
+                textElement.setAttribute("x",  mouseX + 6 / CTM.a);
+                textElement.setAttribute("y", mouseY + 20 / CTM.d);
+                textElement.setAttribute("visibility", "visible");
+                textElement.classList.add("tooltip");
+
+                console.log("mouse in");
+            });
+            svgRect.addEventListener("mouseout", () => {
+                textElement.setAttribute("visibility", "hidden");
+                console.log("mouse out");
+            });
+        
             parentSvg.appendChild(svgRect);
             svgElements[key] = svgRect;
         }
@@ -269,16 +291,8 @@ function startGameLoop(){
 }
 
 function displayOverLayDebug(){
-    // <p>{worldModel["game_time"]}</p>
-    //                 <p>keyFrameIndex: {keyFrameIndex} out of {initialBuffer.length}</p> 
-    //                 {/* <p>TweenIndex: {tweenIndex} out of {initialBuffer[keyFrameIndex].tweens.length}</p>  */}
-    //                 <p>timeToNextKey:{timeToNextKey} || {nowTime-lastKeyTime}</p>
-    //                 <p>Counter:{counter}</p>
-    //                 <p>timeToNextTween:{timeToNextTween} || {nowTime - lastTweenTime}</p>
-    //                 <p>Now time:{nowTime}</p>
-    var string = "game time: " + worldModel["game_time"]+ "<br/> keyFrameIndex: " + keyFrameIndex + "/" + initialBuffer.length + " <br/> timeToNextKey: "+  timeToNextKey + "<br/> timeToNextTween:" + timeToNextTween+" <br/> Now time:" + nowTime + "<br/> broadcast latency: " + broadcastLatency;
-    textSvg.setAttribute("y", 30);
-    textSvg.innerHTML = string;
+    var string = "game time: " + worldModel["game_time"]+ "\n keyFrameIndex: " + keyFrameIndex + "/" + initialBuffer.length + " \n timeToNextKey: "+  timeToNextKey + "\n timeToNextTween:" + timeToNextTween+" \n Now time:" + nowTime + "\n broadcast latency: " + broadcastLatency;
+    textSvg.textContent = string;
 }
 
 var keyHolder;
@@ -316,7 +330,6 @@ function gameLoop(){
         updateWorldModelWithTween(initialBuffer[keyHolder].tweens[tweenIndex]);
         lastTweenTime = nowTime;
         updateSvgRects();
-
         if(initialBuffer[keyHolder].tweens[tweenIndex+1]!=null){
             timeToNextTween = initialBuffer[keyHolder].tweens[tweenIndex+1].game_time - initialBuffer[keyHolder].tweens[tweenIndex].game_time - tweenOffset;
         }
@@ -324,6 +337,7 @@ function gameLoop(){
             //todo use the key frame rate, cast to int
             timeToNextTween = 1000 * 1000;
         }
+        timeToNextTween -= Date.now() - nowTime;
     }
     // displayOverLayDebug();
     window.requestAnimationFrame(gameLoop);

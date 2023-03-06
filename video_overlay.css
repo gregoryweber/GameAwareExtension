@@ -1,26 +1,7 @@
 .tooltip {
-}
-
-.tooltiptext {
-  visibility: hidden;
-  width: 120px;
-  background-color: black;
-  color: #fff;
-  display: inline-block;
-  width: auto;
-  border-radius: 6px;
-  padding: 5px 0;
-  white-space: pre-wrap;
-
-  /* Position the tooltip */
   position: absolute;
-  z-index: 1;
-  top: -5px;
-  left: 105%;
+  background-color: black;
+  fill:black;
+  padding: 5px;
+  font-size: 12px;
 }
-
-.tooltip:hover .tooltiptext {
-  visibility: visible;
-}
-
-
