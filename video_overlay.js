@@ -263,11 +263,14 @@ function updateSvgRects(){
                 rectElement.setAttribute("y", bbox.y - 5);
 
                 gElement.setAttribute("visibility", "visible");
-                console.log("mouse in");
+                // console.log("mouse in");
             });            
             svgRect.addEventListener("mouseout", () => {
                 gElement.setAttribute("visibility", "hidden");
-                console.log("mouse out");
+                // console.log("mouse out");
+            });
+            svgRect.addEventListener("click", (evt) => {
+                evt.target.setAttribute("stroke", getRandomColor());
             });
         
             parentSvg.appendChild(svgRect);
@@ -288,6 +291,12 @@ function updateSvgRects(){
     
 
 }
+
+function getRandomColor() {
+    const colors = ['#e6194b', '#3cb44b', '#ffe119', '#0082c8', '#f58231', '#911eb4'];
+    return colors[Math.floor(Math.random() * colors.length)];
+  }
+  
 
 function updateWorldModelWithKey(keyFrame){
     worldModel = JSON.parse(JSON.stringify(keyFrame));
@@ -374,72 +383,3 @@ function gameLoop(){
     // displayOverLayDebug();
     window.requestAnimationFrame(gameLoop);
 }
-
-// function Rect() {
-//         let xOffset = 0;
-//         let yOffset = 0;
-//         let width = 0;
-//         let height = 0;
-//         const jsonArray = Object.entries(worldModel["key"]);
-//         let tooltipInfo={};
-//         const [colors, setColors] = React.useState(
-//             Object.fromEntries(
-//               Object.keys(worldModel["key"]).map((key) => [key, "red"])
-//             )
-//           );
-          
-//         const handleDivClick = (key) => {
-//             // Create a copy of the current colors object
-//             const newColors = { ...colors };
-//             // Change the color of the rectangle with the given key to a random color using Math.random()
-//             newColors[key] = `rgb(${Math.random() * 255}, ${Math.random() * 255}, ${Math.random() * 255})`;
-//             // Set the updated colors object as the new state
-//             setColors(newColors);
-//           };
-          
-//         return (
-//             <div>
-//                 <p>{worldModel["game_time"]}</p>
-//                 <p>keyFrameIndex: {keyFrameIndex} out of {initialBuffer.length}</p> 
-//                 {/* <p>TweenIndex: {tweenIndex} out of {initialBuffer[keyFrameIndex].tweens.length}</p>  */}
-//                 <p>timeToNextKey:{timeToNextKey} || {nowTime-lastKeyTime}</p>
-//                 <p>Counter:{counter}</p>
-//                 <p>timeToNextTween:{timeToNextTween} || {nowTime - lastTweenTime}</p>
-//                 <p>Now time:{nowTime}</p>
-//                 {jsonArray.map(([key, value]) => {
-//                     if(key!=null && value["screenRect"]!= null){
-//                         tooltipInfo = Object.entries(value).map(([key, value]) => {
-//                         if (typeof value === "object") {
-//                             // For nested objects, use JSON.stringify to convert the object to a string
-//                             // with the key-value pairs separated by a colon
-//                             return `${key}: ${JSON.stringify(value)}`;
-//                         } else {
-//                             // For non-object values, simply use the key-value pair with a colon separator
-//                             return `${key}: ${value}`;
-//                         }
-//                         }).join("\n");
-
-//                         xOffset = value["screenRect"].x/screen_width*100;
-//                         yOffset = value["screenRect"].y/screen_height*100;
-//                         width = value["screenRect"].w/screen_width*100;
-//                         height = value["screenRect"].h/screen_height*100;
-//                         return <div onClick={()=> handleDivClick(key)} className = "tooltip"key ={key} style={{
-//                                 width:--width+'%', 
-//                                 height:--height+'%', 
-//                                 border:'5px solid ' + colors[key], 
-//                                 position:'absolute',
-//                                 top: --yOffset+'%',
-//                                 left: --xOffset +'%',
-
-//                             }}>
-//                                 <span key={value["secret_name"]}className = "tooltiptext">{tooltipInfo} </span>
-//                             </div>;
-//                     }
-//                 })}
-            
-//             </div>
-//         );
-        
-// }
-// const domContainer = document.querySelector('#rect_container');
-// const root = ReactDOM.createRoot(domContainer);
