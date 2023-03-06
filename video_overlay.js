@@ -161,7 +161,6 @@ var svgElements;
 var textSvg;
 
 function updateSvgRects(){
-    // Update the SVG rects based on the updated values in the world model
     let xOffset = 0;
     let yOffset = 0;
     let width = 0;
@@ -276,6 +275,18 @@ function updateSvgRects(){
         }
       }
     });
+
+    //First thing to do: if an item is in the svgElements list and is no longer in the worldModel. remove it
+    Object.entries(svgElements).forEach(([key, value]) => {
+        if (!(key in worldModel["key"])) {
+            if (parentSvg.contains(value)) {
+                parentSvg.removeChild(value);
+            }
+            delete svgElements[key];
+        }
+    });
+    
+
 }
 
 function updateWorldModelWithKey(keyFrame){
