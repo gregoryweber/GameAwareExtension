@@ -168,13 +168,31 @@ function updateSvgRects(){
     let height = 0;  
     let tooltipInfo;
 
-    var textElement = document.getElementById("tooltip");
-    if(!textElement){
-        textElement = document.createElementNS("http://www.w3.org/2000/svg", "text");
+    var gElement = document.getElementById("tooltip-group");
+    if(!gElement){
+        gElement = document.createElementNS("http://www.w3.org/2000/svg", "g");
     
+        // Set the attributes of the g element
+        gElement.setAttribute("id", "tooltip-group");
+        gElement.setAttribute("visibility", "hidden");
+
+        var textElement = document.createElementNS("http://www.w3.org/2000/svg", "text");
+
         // Set the attributes of the text element
         textElement.setAttribute("id", "tooltip");
-        parentSvg.appendChild(textElement);
+        textElement.setAttribute("width", "50");
+        textElement.setAttribute("height", "50");
+        textElement.setAttribute("fill", "black");
+        textElement.setAttribute("background-color", "#000000");
+         // Create a <rect> element to serve as the background of the tooltip
+         var rectElement = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+         rectElement.setAttribute("fill", "lightgray");
+         rectElement.setAttribute("rx", 5);
+         rectElement.setAttribute("ry", 5);
+
+        gElement.appendChild(rectElement);
+        gElement.appendChild(textElement);
+        parentSvg.appendChild(gElement);
     }
     Object.entries(worldModel["key"]).forEach(([key, value]) => {
       if (key != null && value["screenRect"] != null) {
@@ -204,20 +222,15 @@ function updateSvgRects(){
             svgRect.setAttribute("stroke", "red");
             svgRect.setAttribute("stroke-width", "2");
             svgRect.setAttribute("position", "absolute");
-            svgRect.style.pointerEvents = "all"; // prevent stroke from triggering mouse events
-
-            textElement.setAttribute("width", "50");
-            textElement.setAttribute("height", "50");
-            textElement.setAttribute("visibility", "hidden")
-    
+            svgRect.style.pointerEvents = "all"; // prevent stroke from triggering mouse events    
             svgRect.addEventListener("mousemove", (evt) => {
                 // Set the text content of the text element
                 textElement.textContent = "";
-          
+            
                 var CTM = svgRect.getScreenCTM();
                 var mouseX = (evt.clientX - CTM.e) / CTM.a;
                 var mouseY = (evt.clientY - CTM.f) / CTM.d;
-                
+            
                 tooltipInfo = Object.entries(value).map(function(entry) {
                     var key = entry[0];
                     var value = entry[1];
@@ -227,27 +240,34 @@ function updateSvgRects(){
                         return key + ": " + value;
                     }
                 }).join("\n");
-                
+            
                 // Split the tooltip info into an array of lines
                 var tooltipLines = tooltipInfo.split("\n");
-                
-                // Create a <tspan> element for each line of text
+            
+                gElement.setAttribute("transform", `translate(${mouseX + 6 / CTM.a}, ${mouseY + 20 / CTM.d})`);
+                gElement.setAttribute("class", "tooltip");
+                textElement.textContent = "";
+        
                 tooltipLines.forEach(function(line, index) {
                     var tspan = document.createElementNS("http://www.w3.org/2000/svg", "tspan");
-                    tspan.setAttribute("x", mouseX + 6 / CTM.a);
+                    tspan.setAttribute("x", 0);
                     tspan.setAttribute("dy", "1.2em"); // Line spacing
                     tspan.textContent = line;
                     textElement.appendChild(tspan);
                 });
-                textElement.setAttribute("x",  mouseX + 6 / CTM.a);
-                textElement.setAttribute("y", mouseY + 20 / CTM.d);
-                textElement.setAttribute("visibility", "visible");
-                textElement.classList.add("tooltip");
 
+                // Set the attributes of the rect element
+                var bbox = textElement.getBBox();
+                rectElement.setAttribute("width", bbox.width + 10);
+                rectElement.setAttribute("height", bbox.height + 10);
+                rectElement.setAttribute("x", bbox.x - 5);
+                rectElement.setAttribute("y", bbox.y - 5);
+
+                gElement.setAttribute("visibility", "visible");
                 console.log("mouse in");
-            });
+            });            
             svgRect.addEventListener("mouseout", () => {
-                textElement.setAttribute("visibility", "hidden");
+                gElement.setAttribute("visibility", "hidden");
                 console.log("mouse out");
             });
         
@@ -257,6 +277,7 @@ function updateSvgRects(){
       }
     });
 }
+
 function updateWorldModelWithKey(keyFrame){
     worldModel = JSON.parse(JSON.stringify(keyFrame));
 
