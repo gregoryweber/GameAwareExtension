@@ -383,3 +383,12 @@ function gameLoop(){
     // displayOverLayDebug();
     window.requestAnimationFrame(gameLoop);
 }
+
+function incrementTweenOffset() {
+    tweenOffset++; // increment tweenOffset by 1
+    document.getElementById("tween-offset").innerHTML = tweenOffset; // update the value displayed on the web page
+}
+function decrementTweenOffset() {
+    tweenOffset--; // decrement tweenOffset by 1
+    document.getElementById("tween-offset").innerHTML = tweenOffset; // update the value displayed on the web page
+}

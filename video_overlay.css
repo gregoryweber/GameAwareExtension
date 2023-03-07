@@ -5,3 +5,14 @@
   padding: 5px;
   font-size: 12px;
 }
+
+.container {
+  position: fixed;
+  bottom: 0;
+  right: 0;
+  padding: 5px;
+  text-align: center;
+}
+button{
+  margin-bottom: 30px;
+}
