@@ -89,19 +89,15 @@ function syncBuffer(){
     //start_clock_secs = local time stamp from the streamer's computer
     //start_game_secs = Unity's frame of reference of time (all future game times are from this frame of reference)
     //broadcastLatency = number from Twitch, latency from the streamer to the viewer
-
-
-    // console.log("now time: " + Date.now());
-    // console.log("start_clock_secs: " + start_clock_secs);
-    // console.log("start_game_secs: " + start_game_secs);
-    // console.log("broadcast latency: " + broadcastLatency)
     let actualTime = Date.now() - start_clock_secs - start_game_secs - (broadcastLatency * 1000);
     
     // Search initial buffer, find key within 1/key_frame_rate of the calculated keyTime
     // Target key frame should be the same as key time if we ignore the hundreds values (only the thousands are the seconds);
-    for( let i = 0; i < initialBuffer.length; i++){
-        if(Math.abs(actualTime - initialBuffer[i].game_time) <= ((1/key_rate) * 1000)){
+    for( let i = 0; i < initialBuffer.length-1; i++){
+        // if(actualTime - initialBuffer[i].game_time < ((1/key_rate) * 1000)){
+        if(actualTime - initialBuffer[i+1].game_time < 0){
             actualKeyPointer = i;
+            break;
             // console.log("sync point found");
         }
     }
@@ -111,9 +107,11 @@ function syncBuffer(){
         actualKeyPointer = initialBuffer.length-1;
     }
     //ToDo: Deal with the case where there are no tweens
-    for( let i = 0; i < initialBuffer[actualKeyPointer].tweens.length; i++){
-        if(actualTime - initialBuffer[actualKeyPointer].tweens[i].game_time <= (1/tween_rate * 1000)){
+    for( let i = 0; i < initialBuffer[actualKeyPointer].tweens.length-1; i++){
+        // if(actualTime - initialBuffer[actualKeyPointer].tweens[i].game_time < (1/tween_rate * 1000)){
+        if(actualTime - initialBuffer[actualKeyPointer].tweens[i+1].game_time < 0){
             actualTweenPointer = i;
+            break;
         }
     }
 
@@ -122,15 +120,11 @@ function syncBuffer(){
         actualTweenPointer = initialBuffer[actualKeyPointer].tweens.length-1;
     }
 
-    // console.log("actual game time: " + actualTime);
-    // console.log("time from the key: "+ initialBuffer[actualKeyPointer].game_time);
-    // console.log("time from the tweens: "+ initialBuffer[actualKeyPointer].tweens[actualTweenPointer].game_time);
-
     initialBuffer.splice(0, actualKeyPointer);
     tweenIndex = actualTweenPointer;
-    keyFrameIndex = 0;
-    lastKeyTime = actualTime - initialBuffer[keyFrameIndex].game_time;
-    lastTweenTime = actualTime - initialBuffer[keyFrameIndex].tweens[tweenIndex].game_time;
+    keyFrameIndex = 1;
+    lastKeyTime = Date.now() - (actualTime - initialBuffer[keyFrameIndex-1].game_time);
+    lastTweenTime = Date.now() - (actualTime - initialBuffer[keyFrameIndex-1].tweens[tweenIndex].game_time);
     timeToNextKey = initialBuffer[keyFrameIndex+1].game_time - initialBuffer[keyFrameIndex].game_time; 
     if(initialBuffer[keyFrameIndex].tweens[tweenIndex+1]!=null){
         timeToNextTween = initialBuffer[keyFrameIndex].tweens[tweenIndex+1].game_time - initialBuffer[keyFrameIndex].tweens[tweenIndex].game_time - tweenOffset;
@@ -140,10 +134,8 @@ function syncBuffer(){
         timeToNextTween = 1000 * 1000;
     }
     updateWorldModelWithKey(initialBuffer[keyFrameIndex]);
-    updateWorldModelWithTween(initialBuffer[keyFrameIndex].tweens[actualTweenPointer]);
+    updateWorldModelWithTween(initialBuffer[keyFrameIndex].tweens[tweenIndex]);
     updateSvgRects();
-    tweenIndex = actualTweenPointer - 1;
-    keyFrameIndex = keyFrameIndex - 1;
 }
 
 // TODO: Be more consistent with var/let use
@@ -188,6 +180,7 @@ function updateSvgRects(){
          rectElement.setAttribute("fill", "lightgray");
          rectElement.setAttribute("rx", 5);
          rectElement.setAttribute("ry", 5);
+         rectElement.setAttribute("id", "tooltipBox");
 
         gElement.appendChild(rectElement);
         gElement.appendChild(textElement);
@@ -224,8 +217,6 @@ function updateSvgRects(){
             svgRect.style.pointerEvents = "all"; // prevent stroke from triggering mouse events    
             svgRect.addEventListener("mousemove", (evt) => {
                 // Set the text content of the text element
-                textElement.textContent = "";
-            
                 var CTM = svgRect.getScreenCTM();
                 var mouseX = (evt.clientX - CTM.e) / CTM.a;
                 var mouseY = (evt.clientY - CTM.f) / CTM.d;
@@ -245,6 +236,9 @@ function updateSvgRects(){
             
                 gElement.setAttribute("transform", `translate(${mouseX + 6 / CTM.a}, ${mouseY + 20 / CTM.d})`);
                 gElement.setAttribute("class", "tooltip");
+                if(!textElement){
+                    textElement =  document.getElementById("tooltip");
+                }
                 textElement.textContent = "";
         
                 tooltipLines.forEach(function(line, index) {
@@ -257,6 +251,9 @@ function updateSvgRects(){
 
                 // Set the attributes of the rect element
                 var bbox = textElement.getBBox();
+                if(!rectElement){
+                    rectElement = document.getElementById("tooltipBox");
+                }
                 rectElement.setAttribute("width", bbox.width + 10);
                 rectElement.setAttribute("height", bbox.height + 10);
                 rectElement.setAttribute("x", bbox.x - 5);
@@ -267,7 +264,7 @@ function updateSvgRects(){
             });            
             svgRect.addEventListener("mouseout", () => {
                 gElement.setAttribute("visibility", "hidden");
-                // console.log("mouse out");
+                console.log("mouse out");
             });
             svgRect.addEventListener("click", (evt) => {
                 evt.target.setAttribute("stroke", getRandomColor());
@@ -326,7 +323,6 @@ function startGameLoop(){
     timeToNextKey = 0;
     timeToNextTween = 0;
     syncBuffer();
-
     window.requestAnimationFrame(gameLoop);
 
 }
@@ -336,16 +332,17 @@ function displayOverLayDebug(){
     textSvg.textContent = string;
 }
 
-var keyHolder;
 var counter;
 var nowTime;
 var tweenOffset = 0;
 function gameLoop(){
     nowTime = Date.now();
-    if(keyFrameIndex < 0 || tweenIndex >= initialBuffer[keyFrameIndex].tweens.length-1){
+    // if(keyFrameIndex < 0 || tweenIndex >= initialBuffer[keyFrameIndex].tweens.length-1){
+    if(nowTime - lastKeyTime >= timeToNextKey){
+        // console.log("key frame update");
         keyFrameIndex++;
         tweenIndex = -1;
-        worldModel = JSON.parse(JSON.stringify(initialBuffer[keyFrameIndex]));
+        updateWorldModelWithKey(initialBuffer[keyFrameIndex]);
         updateSvgRects();
         lastKeyTime = nowTime;
         lastTweenTime = nowTime;
@@ -362,17 +359,11 @@ function gameLoop(){
     }    
     if (nowTime - lastTweenTime >= timeToNextTween){
         tweenIndex++;
-        if(keyFrameIndex == -1){
-            keyHolder = 0;
-        }
-        else{
-            keyHolder = keyFrameIndex;
-        }
-        updateWorldModelWithTween(initialBuffer[keyHolder].tweens[tweenIndex]);
+        updateWorldModelWithTween(initialBuffer[keyFrameIndex].tweens[tweenIndex]);
         lastTweenTime = nowTime;
         updateSvgRects();
-        if(initialBuffer[keyHolder].tweens[tweenIndex+1]!=null){
-            timeToNextTween = initialBuffer[keyHolder].tweens[tweenIndex+1].game_time - initialBuffer[keyHolder].tweens[tweenIndex].game_time - tweenOffset;
+        if(initialBuffer[keyFrameIndex].tweens[tweenIndex+1]!=null){
+            timeToNextTween = initialBuffer[keyFrameIndex].tweens[tweenIndex+1].game_time - initialBuffer[keyFrameIndex].tweens[tweenIndex].game_time - tweenOffset;
         }
         else{
             //todo use the key frame rate, cast to int
