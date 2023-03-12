@@ -211,7 +211,7 @@ function updateSvgRects(){
             svgRect.setAttribute("x", xOffset.toString()+"%");
             svgRect.setAttribute("y", yOffset.toString()+"%");
             svgRect.setAttribute("fill", "none");
-            // svgRect.setAttribute("stroke", "red");
+            svgRect.setAttribute("stroke", "red");
             svgRect.setAttribute("stroke-width", "2");
             svgRect.setAttribute("position", "absolute");
             svgRect.style.pointerEvents = "all"; // prevent stroke from triggering mouse events    
@@ -220,7 +220,7 @@ function updateSvgRects(){
                 var CTM = svgRect.getScreenCTM();
                 var mouseX = (evt.clientX - CTM.e) / CTM.a;
                 var mouseY = (evt.clientY - CTM.f) / CTM.d;
-
+            
                 tooltipInfo = Object.entries(value).map(function(entry) {
                     var key = entry[0];
                     var value = entry[1];
@@ -230,7 +230,7 @@ function updateSvgRects(){
                         return key + ": " + value;
                     }
                 }).join("\n");
-
+            
                 // Split the tooltip info into an array of lines
                 var tooltipLines = tooltipInfo.split("\n");
             
@@ -240,13 +240,7 @@ function updateSvgRects(){
                     textElement =  document.getElementById("tooltip");
                 }
                 textElement.textContent = "";
-                
-                var tspan = document.createElementNS("http://www.w3.org/2000/svg", "tspan");
-                tspan.setAttribute("x", 0);
-                tspan.setAttribute("dy", "1.2em"); // Line spacing
-                tspan.textContent = key.toString();
-                textElement.appendChild(tspan);
-                
+        
                 tooltipLines.forEach(function(line, index) {
                     var tspan = document.createElementNS("http://www.w3.org/2000/svg", "tspan");
                     tspan.setAttribute("x", 0);
@@ -275,11 +269,7 @@ function updateSvgRects(){
             svgRect.addEventListener("click", (evt) => {
                 evt.target.setAttribute("stroke", getRandomColor());
             });
-            if(key.includes("tile")){
-                if(value["type"] == "Safe"){
-                    svgRect.setAttribute("fill", "yellow");
-                }
-            }
+        
             parentSvg.appendChild(svgRect);
             svgElements[key] = svgRect;
         }
