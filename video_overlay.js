@@ -133,8 +133,8 @@ function syncBuffer(){
         //todo use the key frame rate, cast to int
         timeToNextTween = 1000 * 1000;
     }
-    updateWorldModelWithKey(initialBuffer[keyFrameIndex]);
-    updateWorldModelWithTween(initialBuffer[keyFrameIndex].tweens[tweenIndex]);
+    updateWorldModelWithKey(initialBuffer[keyFrameIndex+1]);
+    updateWorldModelWithTween(initialBuffer[keyFrameIndex].tweens[tweenIndex+1]);
     updateDraw();
 }
 
@@ -485,7 +485,9 @@ function updateWorldModelWithTween(tweenFrame){
             worldModel["key"][item][attribute] = JSON.parse(JSON.stringify(tweenFrame[item][attribute]));
         }
     }
-    worldModel["game_time"] = JSON.parse(JSON.stringify(tweenFrame["game_time"]));
+    if(tweenFrame){
+        worldModel["game_time"] = JSON.parse(JSON.stringify(tweenFrame["game_time"]));
+    }
 }
 
 
@@ -512,7 +514,11 @@ function displayOverLayDebug(){
 }
 function updateDraw(){
     if(isDebugVisible){
+        document.getElementById("offset_box").style.visibility="visible";
         updateDebugOverlayRects();
+    }
+    else{
+        document.getElementById("offset_box").style.visibility="hidden";
     }
     updateSVGMazeElements();
 }
