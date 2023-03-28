@@ -148,7 +148,8 @@ var keyFrameIndex;
 var tweenIndex;
 var timeToNextKey;
 var timeToNextTween;
-var parentSvg;
+var parentSvgDebug;
+var parentSvgMaze;
 var svgDebugElements;
 var svgMazeElements;
 var textSvg;
@@ -187,7 +188,7 @@ function updateDebugOverlayRects(){
 
         gElement.appendChild(rectElement);
         gElement.appendChild(textElement);
-        parentSvg.appendChild(gElement);
+        parentSvgDebug.appendChild(gElement);
     }
     Object.entries(worldModel["key"]).forEach(([key, value]) => {
       if (key != null && value["screenRect"] != null) {
@@ -278,7 +279,7 @@ function updateDebugOverlayRects(){
             svgRect.addEventListener("click", (evt) => {
                 evt.target.setAttribute("stroke", getRandomColor());
             });
-            parentSvg.appendChild(svgRect);
+            parentSvgDebug.appendChild(svgRect);
             svgDebugElements[key] = svgRect;
         }
       }
@@ -305,7 +306,7 @@ function createPoint(x,y,radius,color,key){
     svgPoint.setAttribute("cy", y.toString()+"%");
     svgPoint.setAttribute("position", "absolute");
     svgPoint.setAttribute("fill", color.toString());
-    parentSvg.appendChild(svgPoint);
+    parentSvgMaze.appendChild(svgPoint);
 
     return svgPoint;
 }
@@ -323,7 +324,7 @@ function createLine(x1,y1,x2,y2,color,key){
     svgLine.setAttribute("position", "absolute");
     svgLine.setAttribute("stroke", color.toString());
     svgLine.setAttribute("stroke-width", "2");
-    parentSvg.appendChild(svgLine);
+    parentSvgMaze.appendChild(svgLine);
 
     return svgLine;
 }
@@ -381,7 +382,7 @@ function updateSVGMazeElements(){
             else{
                 svgRect.setAttribute("fill", "none");
             }
-            parentSvg.appendChild(svgRect);
+            parentSvgMaze.appendChild(svgRect);
             svgMazeElements[key] = svgRect;
         }
     }
@@ -451,7 +452,7 @@ function updateSVGMazeElements(){
                 svgRect.setAttribute("stroke", "red");
                 svgRect.setAttribute("stroke-width", "2");
             }
-            parentSvg.appendChild(svgRect);
+            parentSvgMaze.appendChild(svgRect);
             svgMazeElements[key] = svgRect;
         }
     }
@@ -492,7 +493,8 @@ function updateWorldModelWithTween(tweenFrame){
 
 
 function startGameLoop(){
-    parentSvg = document.getElementById("parent_svg");
+    parentSvgDebug = document.getElementById("parent_svg_debug");
+    parentSvgMaze = document.getElementById("parent_svg_maze");
     textSvg = document.getElementById("debugging");
 
     svgDebugElements = {};
@@ -515,10 +517,12 @@ function displayOverLayDebug(){
 function updateDraw(){
     if(isDebugVisible){
         document.getElementById("offset_box").style.visibility="visible";
+        document.getElementById("parent_svg_debug").style.visibility = "visible";
         updateDebugOverlayRects();
     }
     else{
         document.getElementById("offset_box").style.visibility="hidden";
+        document.getElementById("parent_svg_debug").style.visibility = "hidden";
     }
     updateSVGMazeElements();
 }
