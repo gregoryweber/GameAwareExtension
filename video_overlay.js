@@ -520,16 +520,21 @@ function displayOverLayDebug(){
 }
 function updateDraw(){
     if(isDebugVisible){
-        document.getElementById("offset_box").style.visibility="visible";
+        document.getElementById("offset_box").style.visibility = "visible";
         document.getElementById("parent_svg_debug").style.visibility = "visible";
         updateDebugOverlayRects();
     }
     else{
-        document.getElementById("offset_box").style.visibility="hidden";
+        document.getElementById("offset_box").style.visibility = "hidden";
         document.getElementById("parent_svg_debug").style.visibility = "hidden";
-
     }
-    updateSVGMazeElements();
+    if(isMazeVisible){
+        document.getElementById("parent_svg_maze").style.visibility = "visible";
+        updateSVGMazeElements();
+    }
+    else{
+        document.getElementById("parent_svg_maze").style.visibility = "hidden";
+    }
 }
 
 var counter;
@@ -585,6 +590,7 @@ function decrementTweenOffset() {
 }
 
 var isDebugVisible = false;
+var isMazeVisible = false;
 function displayDebugOverlay(){
     if(isDebugVisible == false){
         isDebugVisible = true;
@@ -594,3 +600,24 @@ function displayDebugOverlay(){
     }
     console.log(isDebugVisible);
 }
+
+function changeOverlay(){
+    const debugCheckbox = document.querySelector('input[value="debug"]');
+    const mazeCheckbox = document.querySelector('input[value="maze"]');
+  
+    // Toggle the visibility of all the selected overlays
+    isDebugVisible = debugCheckbox.checked;
+    isMazeVisible = mazeCheckbox.checked;  
+}
+
+function getSelectedOptions(selectElement) {
+    var selectedOptions = [];
+    var options = selectElement.options;
+    for (let i = 0; i < options.length; i++) {
+      const option = options[i];
+      if (option.selected) {
+        selectedOptions.push(option.value);
+      }
+    }
+    return selectedOptions;
+  }

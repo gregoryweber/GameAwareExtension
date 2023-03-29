@@ -17,9 +17,15 @@
       </svg>
       <svg id = "parent_svg_debug" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;">
       </svg>
-      <div class = "extension-options">
-        <button id = "debug" onclick="displayDebugOverlay()">Display Debug Overlay</button>
+      <div class="extension-options">
+        <label>
+          <input type="checkbox" name="overlay" value="debug" onchange="changeOverlay()"> Debug Overlay
+        </label>
+        <label>
+          <input type="checkbox" name="overlay" value="maze" onchange="changeOverlay()"> Maze Overlay
+        </label>
       </div>
+      
       <div class="container" id="offset_box">
         <h3>Tween Offset: <span id="tween-offset">0</span></h3>
         <button id = "plus" onclick="incrementTweenOffset()">+</button>
