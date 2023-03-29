@@ -268,8 +268,12 @@ function updateDebugOverlayRects(){
                 rectElement.setAttribute("height", bbox.height + 10);
                 rectElement.setAttribute("x", bbox.x - 5);
                 rectElement.setAttribute("y", bbox.y - 5);
-
-                gElement.setAttribute("visibility", "visible");
+                if(isDebugVisible){
+                    gElement.setAttribute("visibility", "visible");
+                }
+                else{
+                    gElement.setAttribute("visibility", "hidden");
+                }
                 // console.log("mouse in");
             });            
             svgRect.addEventListener("mouseout", () => {
@@ -523,6 +527,7 @@ function updateDraw(){
     else{
         document.getElementById("offset_box").style.visibility="hidden";
         document.getElementById("parent_svg_debug").style.visibility = "hidden";
+
     }
     updateSVGMazeElements();
 }
