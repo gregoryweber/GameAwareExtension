@@ -515,7 +515,7 @@ function updateSVGBloomwoodElements() {
   let height = 0;
   Object.entries(worldModel["key"]).forEach(([key, value]) => {
     if (key.includes("visualNovelText") && value["screenRect"] != null) {
-      xOffset = (value["screenRect"].x / screen_width) * 100;
+      xOffset = (value["screenRect"].x / screen_width) * 100 - 0.5;
       yOffset = (value["screenRect"].y / screen_height) * 100;
       width = (value["screenRect"].w / screen_width) * 100;
       height = (value["screenRect"].h / screen_height) * 100;
@@ -531,7 +531,16 @@ function updateSVGBloomwoodElements() {
         var textContainer = foreignObject.querySelector(
           "#" + key + "-text-container"
         );
-        textContainer.innerHTML = value["dialogRendered"];
+        translateText(value["dialogRendered"], target)
+        .then((translatedText) => {
+          textContainer.innerHTML = translatedText;
+        })
+        .catch((error) => {
+          console.error(error);
+        });
+        textContainer.style.fontSize = 12 + fontSizeChange + "px";
+        textContainer.style.color = fontColor.toString();
+        textContainer.style.fontFamily = fontType.toString();
       } else {
         svgRect = document.createElementNS(
           "http://www.w3.org/2000/svg",
@@ -543,12 +552,12 @@ function updateSVGBloomwoodElements() {
         dialogContainer.setAttribute("height", height.toString() + "%");
         dialogContainer.setAttribute("x", xOffset.toString() + "%");
         dialogContainer.setAttribute("y", yOffset.toString() + "%");
-
+        
         svgRect.setAttribute("width", "100%");
         svgRect.setAttribute("height", "100%");
         svgRect.setAttribute("x", "0%");
         svgRect.setAttribute("y", "0%");
-        svgRect.setAttribute("fill", "black");
+        svgRect.setAttribute("fill", "white");
 
         var foreignObject = document.createElementNS(
           "http://www.w3.org/2000/svg",
@@ -557,17 +566,19 @@ function updateSVGBloomwoodElements() {
         foreignObject.setAttribute("id", key + "-text");
         foreignObject.setAttribute("width", "100%");
         foreignObject.setAttribute("height", "100%");
-        foreignObject.setAttribute("x", "1%");
-        foreignObject.setAttribute("y", "1%");
+        foreignObject.setAttribute("x", "1px");
+        foreignObject.setAttribute("y", "1px");
 
         foreignObject.innerHTML = `
-            <div style="width:100%; height:100%;"><div id="${key}-text-container" style="width:100%; height:100%; font-size:25px; color:red; overflow-wrap: break-word; overflow:auto;">${value["dialogRendered"]}</div></div>`;
+            <div style="width:100%; height:100%;"><div id="${key}-text-container" style="width:100%; height:100%; font-size:12px; color:red; overflow-wrap: break-word; overflow:auto;">${value["dialogRendered"]}</div></div>`;
 
         var textContainer = foreignObject.querySelector(
           "#" + key + "-text-container"
         );
         textContainer.innerHTML = value["dialogRendered"];
-
+        textContainer.style.fontSize = 12 + fontSizeChange + "px";
+        textContainer.style.color = fontColor.toString();
+        textContainer.style.fontFamily = fontType.toString();
         dialogContainer.appendChild(svgRect);
         dialogContainer.appendChild(foreignObject);
         svgBloomwoodElements[key] = svgRect;
@@ -660,10 +671,12 @@ function updateDraw() {
     document.getElementById("parent_svg_maze").style.visibility = "hidden";
   }
   if (isBloomwoodVisible) {
+    document.getElementById("accessibility_container").style.visibility = "visible";
     document.getElementById("parent_svg_bloomwood").style.visibility =
       "visible";
     updateSVGBloomwoodElements();
   } else {
+    document.getElementById("accessibility_container").style.visibility = "hidden";
     document.getElementById("parent_svg_bloomwood").style.visibility = "hidden";
   }
 }
@@ -758,4 +771,53 @@ function getSelectedOptions(selectElement) {
     }
   }
   return selectedOptions;
+}
+var fontSizeChange = 0;
+function increaseFontSize() {
+    if(fontSizeChange <= 50){
+        fontSizeChange +=2;
+    }
+  }
+  
+function decreaseFontSize() {
+    if(fontSizeChange >= 0){
+        fontSizeChange-=2;
+    }
+}
+
+var fontColor = "black";
+function changeFontColor() {
+    var fontColorSelect = document.getElementById("font-color-select");
+    fontColor = fontColorSelect.value;
+  }
+  
+var fontType = "Arial";
+function changeFontType() {
+    var fontTypeSelect = document.getElementById("font-type-select");
+    fontType = fontTypeSelect.value;
+    
+}
+
+function translateText(text, target) {
+    const source = 'en';
+    const encodedText = encodeURIComponent(text);
+    const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=${source}&tl=${target}&dt=t&ie=UTF-8&oe=UTF-8&otf=2&q=${encodedText}`;
+  
+    return fetch(url)
+      .then(response => response.json())
+      .then(result => {
+        let translatedText = '';
+        for (let i = 0; i < result[0].length; i++) {
+          translatedText += result[0][i][0];
+        }
+        return translatedText.trim();
+      })
+      .catch(error => console.error(error));
+  }
+  
+
+var target = "en";
+function changeLanguage(){
+    var languageSelect = document.getElementById("language-select");
+    target = languageSelect.value;
 }
