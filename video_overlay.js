@@ -150,8 +150,10 @@ var timeToNextKey;
 var timeToNextTween;
 var parentSvgDebug;
 var parentSvgMaze;
+var parentSvgBloomwood;
 var svgDebugElements;
 var svgMazeElements;
+var svgBloomwoodElements;
 var textSvg;
 
 
@@ -473,6 +475,66 @@ function updateSVGMazeElements(){
     
 }
 
+function updateSVGBloomwoodElements(){
+    let xOffset = 0;
+    let yOffset = 0;
+    let width = 0;
+    let height = 0;  
+    Object.entries(worldModel["key"]).forEach(([key, value]) => {  
+      if (key.includes("visualNovelText") && value["screenRect"] != null) {
+        xOffset = value["screenRect"].x/screen_width*100;
+        yOffset = value["screenRect"].y/screen_height*100;
+        width = value["screenRect"].w/screen_width*100;
+        height = value["screenRect"].h/screen_height*100;
+        var dialogContainer = document.getElementById("dialog_container");
+        var svgRect = svgBloomwoodElements[key];
+        if (svgRect) {
+            dialogContainer.setAttribute("width", width.toString() + "%");
+            dialogContainer.setAttribute("height", height.toString() + "%");
+            dialogContainer.setAttribute("x", xOffset.toString()+"%");
+            dialogContainer.setAttribute("y", yOffset.toString()+"%");
+
+            var foreignObject = dialogContainer.getElementById(key + "-text");
+            var textContainer = foreignObject.querySelector("#" + key + "-text-container");
+            textContainer.innerHTML = value["dialogRendered"];
+           
+        }
+        else{
+            svgRect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+            svgRect.setAttribute("id", key);
+            
+            dialogContainer.setAttribute("width", width.toString() + "%");
+            dialogContainer.setAttribute("height", height.toString() + "%");
+            dialogContainer.setAttribute("x", xOffset.toString()+"%");
+            dialogContainer.setAttribute("y", yOffset.toString()+"%");
+
+            svgRect.setAttribute("width", "100%");
+            svgRect.setAttribute("height", "100%");
+            svgRect.setAttribute("x", "0%");
+            svgRect.setAttribute("y", "0%");
+            svgRect.setAttribute("fill", "black");
+
+            var foreignObject = document.createElementNS("http://www.w3.org/2000/svg", "foreignObject");
+            foreignObject.setAttribute("id", key + "-text");
+            foreignObject.setAttribute("width", "100%");
+            foreignObject.setAttribute("height", "100%");
+            foreignObject.setAttribute("x", "1%");
+            foreignObject.setAttribute("y", "1%");
+
+            foreignObject.innerHTML = `
+            <div style="width:100%; height:100%;"><div id="${key}-text-container" style="width:100%; height:100%; font-size:25px; color:red; overflow-wrap: break-word; overflow:auto;">${value["dialogRendered"]}</div></div>`;
+          
+            var textContainer = foreignObject.querySelector("#" + key + "-text-container");          
+            textContainer.innerHTML = value["dialogRendered"];
+
+            dialogContainer.appendChild(svgRect);
+            dialogContainer.appendChild(foreignObject);
+            svgBloomwoodElements[key] = svgRect;
+        }
+    }
+});
+}
+
 function getRandomColor() {
     const colors = ['#e6194b', '#3cb44b', '#ffe119', '#0082c8', '#f58231', '#911eb4'];
     return colors[Math.floor(Math.random() * colors.length)];
@@ -499,10 +561,12 @@ function updateWorldModelWithTween(tweenFrame){
 function startGameLoop(){
     parentSvgDebug = document.getElementById("parent_svg_debug");
     parentSvgMaze = document.getElementById("parent_svg_maze");
+    parentSvgBloomwood = document.getElementById("parent_svg_bloomwood");
     textSvg = document.getElementById("debugging");
 
     svgDebugElements = {};
     svgMazeElements = {};
+    svgBloomwoodElements = {};
     lastKeyTime = 0;
     lastTweenTime = 0;
     keyFrameIndex = -1;
@@ -535,6 +599,13 @@ function updateDraw(){
     else{
         document.getElementById("parent_svg_maze").style.visibility = "hidden";
     }
+    if(isBloomwoodVisible){
+        document.getElementById("parent_svg_bloomwood").style.visibility = "visible";
+        updateSVGBloomwoodElements();
+    }
+    else{
+        document.getElementById("parent_svg_bloomwood").style.visibility = "hidden";
+    }
 }
 
 var counter;
@@ -551,7 +622,6 @@ function gameLoop(){
         updateDraw()
         lastKeyTime = nowTime;
         lastTweenTime = nowTime;
-        console.log(initialBuffer[keyFrameIndex]);
 
         timeToNextTween = initialBuffer[keyFrameIndex].tweens[0].game_time - initialBuffer[keyFrameIndex].game_time - tweenOffset;
 
@@ -591,6 +661,7 @@ function decrementTweenOffset() {
 
 var isDebugVisible = false;
 var isMazeVisible = false;
+var isBloomwoodVisible = false;
 function displayDebugOverlay(){
     if(isDebugVisible == false){
         isDebugVisible = true;
@@ -603,11 +674,13 @@ function displayDebugOverlay(){
 
 function changeOverlay(){
     const debugCheckbox = document.querySelector('input[value="debug"]');
-    const mazeCheckbox = document.querySelector('input[value="maze"]');
+    // const mazeCheckbox = document.querySelector('input[value="maze"]');
+    const bloomwoodCheckbox = document.querySelector('input[value="bloomwood"]');
   
     // Toggle the visibility of all the selected overlays
     isDebugVisible = debugCheckbox.checked;
-    isMazeVisible = mazeCheckbox.checked;  
+    // isMazeVisible = mazeCheckbox.checked;
+    isBloomwoodVisible = bloomwoodCheckbox.checked;
 }
 
 function getSelectedOptions(selectElement) {
