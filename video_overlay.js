@@ -90,7 +90,7 @@ function syncBuffer(){
     //start_game_secs = Unity's frame of reference of time (all future game times are from this frame of reference)
     //broadcastLatency = number from Twitch, latency from the streamer to the viewer
     let actualTime = Date.now() - start_clock_secs - start_game_secs - (broadcastLatency * 1000);
-    
+
     // Search initial buffer, find key within 1/key_frame_rate of the calculated keyTime
     // Target key frame should be the same as key time if we ignore the hundreds values (only the thousands are the seconds);
     for( let i = 0; i < initialBuffer.length-1; i++){
@@ -181,6 +181,7 @@ var parentSvgDebug;
 var parentSvgMaze;
 var svgDebugElements;
 var svgMazeElements;
+var svgTowerDefenseElements;
 var textSvg;
 
 
@@ -507,6 +508,151 @@ function getRandomColor() {
     return colors[Math.floor(Math.random() * colors.length)];
   }
   
+  function updateSVGTowerDefenseElements(){
+    let xOffset = 0;
+    let yOffset = 0;
+    let width = 0;
+    let height = 0;  
+    let tooltipInfo;
+
+    var gElement = document.getElementById("tooltip-tower-group");
+    if(!gElement){
+        gElement = document.createElementNS("http://www.w3.org/2000/svg", "g");
+    
+        // Set the attributes of the g element
+        gElement.setAttribute("id", "tooltip-tower-group");
+        gElement.setAttribute("visibility", "hidden");
+
+        var textElement = document.createElementNS("http://www.w3.org/2000/svg", "text");
+
+        // Set the attributes of the text element
+        textElement.setAttribute("id", "tooltip-tower-text");
+        textElement.setAttribute("width", "50");
+        textElement.setAttribute("height", "50");
+        textElement.setAttribute("fill", "black");
+        textElement.setAttribute("background-color", "#000000");
+        textElement.setAttribute("font-size", "15px");
+         // Create a <rect> element to serve as the background of the tooltip
+         var rectElement = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+         rectElement.setAttribute("fill", "darkgray");
+         rectElement.setAttribute("stroke", "white");
+         rectElement.setAttribute("stroke-width", "10px");
+         rectElement.setAttribute("rx", 5);
+         rectElement.setAttribute("ry", 5);
+         rectElement.setAttribute("id", "tooltip-tower-rect");
+
+        gElement.appendChild(rectElement);
+        gElement.appendChild(textElement);
+        parentSvgTowerDefense.appendChild(gElement);
+    }
+    Object.entries(worldModel["key"]).forEach(([key, value]) => {
+      if (key != null && value["screenRect"] != null) {
+        xOffset = value["screenRect"].x/screen_width*100;
+        yOffset = value["screenRect"].y/screen_height*100;
+        width = value["screenRect"].w/screen_width*100;
+        height = value["screenRect"].h/screen_height*100;
+
+        var svgRect = svgTowerDefenseElements[key];
+        if (svgRect) {
+            svgRect.setAttribute("width", width.toString()+"%");
+            svgRect.setAttribute("height", height.toString()+"%");
+            svgRect.setAttribute("x", xOffset.toString()+"%");
+            svgRect.setAttribute("y", yOffset.toString()+"%");
+        }
+        else{
+            svgRect = document.createElementNS(
+                "http://www.w3.org/2000/svg",
+                "rect"
+            );
+            svgRect.setAttribute("id", key + "-tower");
+            svgRect.setAttribute("width", width.toString()+"%");
+            svgRect.setAttribute("height", height.toString()+"%");
+            svgRect.setAttribute("x", xOffset.toString()+"%");
+            svgRect.setAttribute("y", yOffset.toString()+"%");
+            svgRect.setAttribute("fill", "none");
+            // svgRect.setAttribute("stroke", "blue");
+            // svgRect.setAttribute("stroke-width", "2");
+            svgRect.setAttribute("position", "absolute");
+            if(key.includes("Tower")){
+              svgRect.style.pointerEvents = "all"; // prevent stroke from triggering mouse events
+              svgRect.addEventListener("mousemove", (evt) => {
+                  // Set the text content of the text element
+                  var CTM = svgRect.getScreenCTM();
+                  var mouseX = (evt.clientX - CTM.e) / CTM.a;
+                  var mouseY = (evt.clientY - CTM.f) / CTM.d;
+  
+                  tooltipInfo = Object.entries(value).map(function(entry) {
+                      var key = entry[0];
+                      var value = entry[1];
+                      if (typeof value === "object") {
+                          return key + ": " + JSON.stringify(value);
+                      } else {
+                          return key + ": " + value;
+                      }
+                  }).join("\n");
+  
+                  // Split the tooltip info into an array of lines
+                  var tooltipLines = tooltipInfo.split("\n");
+              
+                  gElement.setAttribute("transform", `translate(${mouseX + 6 / CTM.a}, ${mouseY + 20 / CTM.d})`);
+                  gElement.setAttribute("class", "tooltip");
+                  if(!textElement){
+                      textElement =  document.getElementById("tooltip-tower-text");
+                  }
+                  textElement.textContent = "";
+                  
+                  var tspan = document.createElementNS("http://www.w3.org/2000/svg", "tspan");
+                  tspan.setAttribute("x", 0);
+                  tspan.setAttribute("dy", "1.2em"); // Line spacing
+                  tspan.textContent = key.toString();
+                  textElement.appendChild(tspan);
+                  
+                  tooltipLines.forEach(function(line, index) {
+                      var tspan = document.createElementNS("http://www.w3.org/2000/svg", "tspan");
+                      tspan.setAttribute("x", 0);
+                      tspan.setAttribute("dy", "1.2em"); // Line spacing
+                      tspan.textContent = line;
+                      textElement.appendChild(tspan);
+                  });
+  
+                  // Set the attributes of the rect element
+                  var bbox = textElement.getBBox();
+                  if(!rectElement){
+                      rectElement = document.getElementById("tooltip-tower-rect");
+                  }
+                  rectElement.setAttribute("width", bbox.width + 10);
+                  rectElement.setAttribute("height", bbox.height + 10);
+                  rectElement.setAttribute("x", bbox.x - 5);
+                  rectElement.setAttribute("y", bbox.y - 5);
+                  if(isTowerDefenseVisible){
+                      gElement.setAttribute("visibility", "visible");
+                  }
+                  else{
+                      gElement.setAttribute("visibility", "hidden");
+                  }
+                  // console.log("mouse in");
+              });            
+              svgRect.addEventListener("mouseout", () => {
+                  gElement.setAttribute("visibility", "hidden");
+                  console.log("mouse out");
+              });
+            }    
+            parentSvgTowerDefense.appendChild(svgRect);
+            svgTowerDefenseElements[key] = svgRect;
+        }
+      }
+    });
+    //First thing to do: if an item is in the svgElements list and is no longer in the worldModel. remove it
+    Object.entries(svgTowerDefenseElements).forEach(([key, value]) => {
+        if (!(key in worldModel["key"])) {
+            if (parentSvgTowerDefense.contains(value)) {
+              parentSvgTowerDefense.removeChild(value);
+            }
+            delete svgTowerDefenseElements[key];
+        }
+    });
+}
+
 
 function updateWorldModelWithKey(keyFrame){
     worldModel = JSON.parse(JSON.stringify(keyFrame));
@@ -529,11 +675,11 @@ function updateWorldModelWithTween(tweenFrame){
 
 function startGameLoop(){
     parentSvgDebug = document.getElementById("parent_svg_debug");
-    parentSvgMaze = document.getElementById("parent_svg_maze");
+    parentSvgTowerDefense = document.getElementById("parent_svg_tower_defense");
     textSvg = document.getElementById("debugging");
 
     svgDebugElements = {};
-    svgMazeElements = {};
+    svgTowerDefenseElements = {};
     lastKeyTime = 0;
     lastTweenTime = 0;
     keyFrameIndex = -1;
@@ -559,12 +705,12 @@ function updateDraw(){
         document.getElementById("offset_box").style.visibility = "hidden";
         document.getElementById("parent_svg_debug").style.visibility = "hidden";
     }
-    if(isMazeVisible){
-        document.getElementById("parent_svg_maze").style.visibility = "visible";
-        updateSVGMazeElements();
+    if(isTowerDefenseVisible){
+        document.getElementById("parent_svg_tower_defense").style.visibility = "visible";
+        updateSVGTowerDefenseElements();
     }
     else{
-        document.getElementById("parent_svg_maze").style.visibility = "hidden";
+        document.getElementById("parent_svg_tower_defense").style.visibility = "hidden";
     }
 }
 
@@ -622,6 +768,7 @@ function decrementTweenOffset() {
 
 var isDebugVisible = false;
 var isMazeVisible = false;
+var isTowerDefenseVisible = false;
 function displayDebugOverlay(){
     if(isDebugVisible == false){
         isDebugVisible = true;
@@ -634,11 +781,12 @@ function displayDebugOverlay(){
 
 function changeOverlay(){
     const debugCheckbox = document.querySelector('input[value="debug"]');
-    const mazeCheckbox = document.querySelector('input[value="maze"]');
+    // const mazeCheckbox = document.querySelector('input[value="maze"]');
+    const towerDefenseCheckbox = document.querySelector('input[value="tower_defense"]');
   
     // Toggle the visibility of all the selected overlays
     isDebugVisible = debugCheckbox.checked;
-    isMazeVisible = mazeCheckbox.checked;  
+    isTowerDefenseVisible = towerDefenseCheckbox.checked;  
 }
 
 function getSelectedOptions(selectElement) {
