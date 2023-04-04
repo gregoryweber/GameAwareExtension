@@ -531,7 +531,7 @@ function updateSVGBloomwoodElements() {
         var textContainer = foreignObject.querySelector(
           "#" + key + "-text-container"
         );
-        translateText(value["dialogRendered"], target)
+        translateText(dialogArray[dialogArrayIndex], target)
         .then((translatedText) => {
           textContainer.innerHTML = translatedText;
         })
@@ -582,6 +582,16 @@ function updateSVGBloomwoodElements() {
         dialogContainer.appendChild(svgRect);
         dialogContainer.appendChild(foreignObject);
         svgBloomwoodElements[key] = svgRect;
+        
+        var previousButton = document.getElementById("previous-dialog-buttton");
+        var nextButton = document.getElementById("next-dialog-button");
+        nextButton.style.position = "absolute";
+        nextButton.style.top = yOffset + height/2 + "%";
+        nextButton.style.left = xOffset + width + 1+ "%";
+
+        previousButton.style.position = "absolute";
+        previousButton.style.top = yOffset + height/2 + "%";
+        previousButton.style.left = xOffset - 3 + "%";
       }
     }
   });
@@ -674,13 +684,17 @@ function updateDraw() {
     document.getElementById("accessibility_container").style.visibility = "visible";
     document.getElementById("parent_svg_bloomwood").style.visibility =
       "visible";
+    document.getElementById("dialog_browser_container").style.visibility = "visible";
     updateSVGBloomwoodElements();
   } else {
     document.getElementById("accessibility_container").style.visibility = "hidden";
     document.getElementById("parent_svg_bloomwood").style.visibility = "hidden";
+    document.getElementById("dialog_browser_container").style.visibility = "hidden";
   }
 }
 
+var newDialog = "";
+var dialogArray = [];
 var counter;
 var nowTime;
 var tweenOffset = 0;
@@ -695,7 +709,15 @@ function gameLoop() {
     updateDraw();
     lastKeyTime = nowTime;
     lastTweenTime = nowTime;
-
+    
+    if(initialBuffer[keyFrameIndex]["key"]["visualNovelText"]){
+        if(!(initialBuffer[keyFrameIndex]["key"]["visualNovelText"]["dialogFull"] === newDialog)){
+            newDialog = initialBuffer[keyFrameIndex]["key"]["visualNovelText"]["dialogFull"].toString();
+            dialogArray.push(newDialog);
+            // console.log(dialogArray);
+            // dialogArrayIndex = dialogArray.length -1;
+        }
+    }
     timeToNextTween =
       initialBuffer[keyFrameIndex].tweens[0].game_time -
       initialBuffer[keyFrameIndex].game_time -
@@ -820,4 +842,22 @@ var target = "en";
 function changeLanguage(){
     var languageSelect = document.getElementById("language-select");
     target = languageSelect.value;
+}
+
+var dialogArrayIndex = 0;
+function advanceDialogArray(){
+    console.log(dialogArrayIndex);
+    if(dialogArrayIndex < dialogArray.length-1){
+        dialogArrayIndex++;
+        console.log(dialogArrayIndex);
+    }
+}
+
+function previousDialogArray(){
+    console.log(dialogArrayIndex);
+    if(dialogArrayIndex > 0){
+        dialogArrayIndex--;
+        console.log(dialogArrayIndex);
+        console.log(dialogArray[dialogArrayIndex]);
+    }
 }

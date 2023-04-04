@@ -18,8 +18,13 @@
       <svg id = "parent_svg_debug" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;">
       </svg>
       <svg id = "parent_svg_bloomwood" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;">
-        <svg id = "dialog_container" style="position: absolute;""></svg>
+        <svg id = "dialog_container" style="position: absolute;">
+        </svg>
       </svg>
+      <div id = "dialog_browser_container">
+        <button id="previous-dialog-buttton" onclick="previousDialogArray()">&#x25C0;</button>
+        <button id="next-dialog-button" onclick="advanceDialogArray()">&#x25B6;</button>
+      </div>
       <div class="extension-options">
         <label>
           <input type="checkbox" name="overlay" value="debug" onchange="changeOverlay()"> Debug Overlay
@@ -28,13 +33,11 @@
           <input type="checkbox" name="overlay" value="bloomwood" onchange="changeOverlay()"> Bloomwood Overlay
         </label>
       </div>
-      
       <div class="container" id="offset_box">
         <h3>Tween Offset: <span id="tween-offset">0</span></h3>
         <button id = "plus" onclick="incrementTweenOffset()">+</button>
         <button id = "minus" onclick="decrementTweenOffset()">-</button>
       </div>
-
       <div id="accessibility_container">
         <div>
           <button id="increase-font-size-button" onclick="increaseFontSize()">Font Size (+)</button>
@@ -68,8 +71,5 @@
           </select>
         </div>
       </div>
-      
-      
-      
     </body>
 </html>
