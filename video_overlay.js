@@ -538,14 +538,61 @@ function getRandomColor() {
     const colors = ['#e6194b', '#3cb44b', '#ffe119', '#0082c8', '#f58231', '#911eb4'];
     return colors[Math.floor(Math.random() * colors.length)];
   }
-  
+  var currentEnemyArray =[];
   function updateSVGTowerDefenseElements(){
     let xOffset = 0;
     let yOffset = 0;
     let width = 0;
     let height = 0;  
     let tooltipInfo;
+    var upcomingEnemiesContainer = document.getElementById("upcoming_enemy_container");
+    var upcomingEnemiesRect = document.getElementById("upcoming_enemy_rect");
+    // Create a new text element and set its content to enemyInfo
+    // Select all elements with class "enemy-info" inside the container
+    var deleteTexts = upcomingEnemiesContainer.querySelectorAll(".enemy-info");
 
+    // Loop through all text elements and remove them
+    for (let j = 0; j < deleteTexts.length; j++) {
+      deleteTexts[j].remove();
+    }
+    var rectBox = upcomingEnemiesRect.getBBox();
+    var startY = rectBox.y + 20;
+    for(let i = 0; i < currentEnemyArray.length; i++){
+      var enemyInfo = buildEnemyInformation(currentEnemyArray[i]);
+      var textElementEnemy = document.createElementNS("http://www.w3.org/2000/svg", "text");
+      // Set the attributes of the text element
+      textElementEnemy.setAttribute("id", enemyInfo.Name);
+      textElementEnemy.setAttribute("width", "50");
+      textElementEnemy.setAttribute("height", "50");
+      textElementEnemy.setAttribute("fill", "whitesmoke");
+      textElementEnemy.setAttribute("background-color", "#000000");
+      textElementEnemy.setAttribute("font-size", "14px");
+      textElementEnemy.setAttribute("class", "enemy-info");
+      textElementEnemy.textContent = "";
+                  // Get the bounding box of the rectangle
+
+      // Set the position of the text elements
+      textElementEnemy.setAttribute("x", rectBox.x + 50); // 10px padding from left edge of rectangle
+      textElementEnemy.setAttribute("y", startY); // 20px padding from top edge of rectangle
+
+      Object.keys(enemyInfo).forEach(function(key, index) {
+        var tspan = document.createElementNS("http://www.w3.org/2000/svg", "tspan");
+        tspan.setAttribute("x", 9);
+        tspan.setAttribute("dy", "1.4em"); // Line spacing
+        if(!(key.includes("Name"))){
+          tspan.textContent = key + ": " + enemyInfo[key];
+        }
+        else{
+          tspan.textContent = enemyInfo[key];
+        }
+        textElementEnemy.appendChild(tspan);
+        startY +=20;
+      });
+
+      // Append the text element to the upcomingEnemiesContainer
+      upcomingEnemiesContainer.appendChild(textElementEnemy);
+
+    }
     var gElement = document.getElementById("tooltip-tower-svg");
     if(!gElement){
         gElement = document.createElementNS("http://www.w3.org/2000/svg", "svg");
@@ -578,6 +625,14 @@ function getRandomColor() {
         parentSvgTowerDefense.appendChild(gElement);
     }
     Object.entries(worldModel["key"]).forEach(([key, value]) => {
+      if (key.includes("WaveManager")){
+        for (let i = 0; i < value.currentWave.enemies.length; i++) {
+          let enemy = value.currentWave.enemies[i];
+          if(!currentEnemyArray.includes(enemy.enemyType)){
+            currentEnemyArray.push(enemy.enemyType);
+          }
+        }
+      }
       if (key != null && value["screenRect"] != null) {
         xOffset = value["screenRect"].x/screen_width*100;
         yOffset = value["screenRect"].y/screen_height*100;
@@ -707,6 +762,41 @@ function getRandomColor() {
     });
 }
 
+function buildEnemyInformation(enemy){
+  var enemyName;
+  var enemyDamage;
+  var enemyHealth;
+  switch(enemy){
+    case "Hoverbuggy":
+      enemyName = "Hover Buggy";
+      enemyDamage = 2;
+      enemyHealth = 5;
+      break;
+    case "Hovercopter":
+      enemyName = "Hover Tank";
+      enemyDamage = 6;
+      enemyHealth = 10;
+      break;
+    case "Hovertank":
+      enemyName = "Hover Tank";
+      enemyDamage = 7;
+      enemyHealth = 15;
+      break;
+    case "Hoverboss":
+      enemyName = "Hover Boss";
+      enemyDamage = 9;
+      enemyHealth = 20;
+      break;
+    default:
+      enemyName = "Hover Buggy";
+      enemyDamage = 2;
+      enemyHealth = 5;
+      break;
+  }
+  var reConstructedObject = {"Name": enemyName, "Damage": enemyDamage, "Health": enemyHealth};
+  return reConstructedObject;
+}
+
 function buildTooltip(key, data){
   var towerName;
   var towerDamage;
@@ -731,7 +821,6 @@ function buildTooltip(key, data){
   towerHealth = data["currentHealth"].toString() + "/" + data.stats.startingHealth.toString();
   
   var reConstructedObject = {"Name": towerName, "Damage": towerDamage, "Fire Rate": towerFireRate, "Health": towerHealth};
-  console.log(reConstructedObject);
   return reConstructedObject;
 }
 
@@ -788,10 +877,12 @@ function updateDraw(){
     }
     if(isTowerDefenseVisible){
         document.getElementById("parent_svg_tower_defense").style.visibility = "visible";
+        document.getElementById("upcoming_enemy_container").style.visibility = "visible";
         updateSVGTowerDefenseElements();
     }
     else{
         document.getElementById("parent_svg_tower_defense").style.visibility = "hidden";
+        document.getElementById("upcoming_enemy_container").style.visibility = "hidden";
     }
 }
 
@@ -802,14 +893,12 @@ function gameLoop(){
     nowTime = Date.now();
     // if(keyFrameIndex < 0 || tweenIndex >= initialBuffer[keyFrameIndex].tweens.length-1){
     if(nowTime - lastKeyTime >= timeToNextKey){
-        // console.log("key frame update");
         keyFrameIndex++;
         tweenIndex = -1;
         updateWorldModelWithKey(initialBuffer[keyFrameIndex]);
         updateDraw()
         lastKeyTime = nowTime;
         lastTweenTime = nowTime;
-        console.log(initialBuffer[keyFrameIndex]);
 
         timeToNextTween = initialBuffer[keyFrameIndex].tweens[0].game_time - initialBuffer[keyFrameIndex].game_time - tweenOffset;
 
