@@ -364,7 +364,7 @@ function createLineTowerDefense(x1,y1,x2,y2,color,key){
       "http://www.w3.org/2000/svg",
       "line"
   );
-  svgLine.setAttribute("id", key);
+  svgLine.setAttribute("id", key + "-line");
   svgLine.setAttribute("x1", x1.toString()+"%");
   svgLine.setAttribute("y1", y1.toString()+"%");
   svgLine.setAttribute("x2", x2.toString()+"%");
@@ -562,7 +562,7 @@ function getRandomColor() {
         textElement.setAttribute("height", "50");
         textElement.setAttribute("fill", "whitesmoke");
         textElement.setAttribute("background-color", "#000000");
-        textElement.setAttribute("font-size", "16px");
+        textElement.setAttribute("font-size", "14px");
          
         // Create a <rect> element to serve as the background of the tooltip
          var rectElement = document.createElementNS("http://www.w3.org/2000/svg", "rect");
@@ -570,7 +570,7 @@ function getRandomColor() {
          rectElement.setAttribute("stroke", "darkgrey");
          rectElement.setAttribute("stroke-width", "10px");
          rectElement.setAttribute("rx", 5);
-         rectElement.setAttribute("ry", 5);
+         rectElement.setAttribute("ry", 200);
          rectElement.setAttribute("id", "tooltip-tower-rect");
 
         gElement.appendChild(rectElement);
@@ -607,20 +607,8 @@ function getRandomColor() {
             svgRect.setAttribute("position", "absolute");
             if(key.includes("Tower")){
               svgRect.style.pointerEvents = "all"; // prevent stroke from triggering mouse events
-              svgRect.addEventListener("mousemove", (evt) => {
-                  tooltipInfo = Object.entries(value["stats"]).map(function(entry) {
-                    if(!(entry[0].includes("effectDetails"))){
-                      var key = entry[0].replace(/([A-Z])/g, " $1").toLowerCase();
-                      var value = entry[1];
-                      if (typeof value === "object") {
-                        return key.charAt(0).toUpperCase()+key.slice(1) + ": " + JSON.stringify(value);
-                      } else {
-                        return key.charAt(0).toUpperCase()+key.slice(1) + ": " + value;
-                      }
-                    }
-                  }).join("\n");
-                  // Split the tooltip info into an array of lines
-                  var tooltipLines = tooltipInfo.split("\n");
+              
+              svgRect.addEventListener("mousemove", (evt) => {                  
                   var towerX = parseFloat(svgRect.getAttribute("x")) + parseFloat(svgRect.getAttribute("width"))/2;
                   var towerY = parseFloat(svgRect.getAttribute("y")) + parseFloat(svgRect.getAttribute("height"))/2;
                   
@@ -633,38 +621,43 @@ function getRandomColor() {
                   else{
                     updatePoint(anchorTower, towerX, towerY);
                   }
-
                   var anchorTooltip = document.getElementById("tooltip-anchor-circle");
                   if(!anchorTooltip){
                     anchorTooltip = createPointTowerDefense(towerX, towerY - 30, 5, "darkgrey", "tooltip-anchor");
                   }
                   else{
-                    updatePoint(anchorTooltip, towerX, towerY - 11);
-                    var anchorLine = createLineTowerDefense(towerX, towerY, towerX, towerY-11, "darkgrey", "tooltip-anchor");
+                    updatePoint(anchorTooltip, towerX, towerY - 8);
+                  }                 
+                  var anchorLine = document.getElementById("tooltip-anchor-line");
+                  if(!anchorLine){
+                    anchorLine = createLineTowerDefense(towerX, towerY, towerX, towerY-8, "darkgrey", "tooltip-anchor");
                     anchorLine.setAttribute("stroke-width", "4");
-                  }                  
-                  towerX -= 20;
-                  towerY -= 50;
+                  }
+                  else{
+                    updateLine(anchorLine, towerX, towerY, towerX, towerY-8);
+                  }
+                  towerX -= 12;
+                  towerY -= 29;
                   gElement.setAttribute("x", towerX.toString()+"%");
                   gElement.setAttribute("y", towerY.toString()+"%");
-                  // gElement.setAttribute("transform", `translate(${mouseX + 6 / CTM.a}, ${mouseY + 20 / CTM.d})`);
                   gElement.setAttribute("class", "tooltip");
+                  
                   if(!textElement){
                     textElement =  document.getElementById("tooltip-tower-text");
                   }
                   textElement.textContent = "";
                   
-                  var tspan = document.createElementNS("http://www.w3.org/2000/svg", "tspan");
-                  tspan.setAttribute("x", 0);
-                  tspan.setAttribute("dy", "1.2em"); // Line spacing
-                  tspan.textContent = key.toString();
-                  textElement.appendChild(tspan);
-                  
-                  tooltipLines.forEach(function(line, index) {
+                  var tooltipData = buildTooltip(key, value);
+                  Object.keys(tooltipData).forEach(function(key, index) {
                     var tspan = document.createElementNS("http://www.w3.org/2000/svg", "tspan");
                     tspan.setAttribute("x", 0);
-                    tspan.setAttribute("dy", "1.2em"); // Line spacing
-                    tspan.textContent = line;
+                    tspan.setAttribute("dy", "1.4em"); // Line spacing
+                    if(!(key.includes("Name"))){
+                      tspan.textContent = key + ": " + tooltipData[key];
+                    }
+                    else{
+                      tspan.textContent = tooltipData[key];
+                    }
                     textElement.appendChild(tspan);
                   });
                   
@@ -673,25 +666,28 @@ function getRandomColor() {
                   if(!rectElement){
                     rectElement = document.getElementById("tooltip-tower-rect");
                   }
-                  rectElement.setAttribute("width", bbox.width + 10);
+                  rectElement.setAttribute("width", bbox.width + 20);
                   rectElement.setAttribute("height", bbox.height + 10);
-                  rectElement.setAttribute("x", bbox.x - 5);
-                  rectElement.setAttribute("y", bbox.y - 5);
+                  rectElement.setAttribute("x", bbox.x-10);
+                  rectElement.setAttribute("y", bbox.y);
                   if(isTowerDefenseVisible){
                     gElement.setAttribute("visibility", "visible");
                     anchorTower.setAttribute("visibility", "visible");
                     anchorTooltip.setAttribute("visibility", "visible");
+                    anchorLine.setAttribute("visibility", "visible");
                   }
                   else{
                     gElement.setAttribute("visibility", "hidden");
                     anchorTower.setAttribute("visibility", "hidden");
                     anchorTooltip.setAttribute("visibility", "hidden");
+                    anchorLine.setAttribute("visibility", "hidden");
                   }
               });            
               svgRect.addEventListener("mouseout", () => {
                   gElement.setAttribute("visibility", "hidden");
                   document.getElementById("tooltip-tower-circle").setAttribute("visibility", "hidden");
                   document.getElementById("tooltip-anchor-circle").setAttribute("visibility", "hidden");
+                  document.getElementById("tooltip-anchor-line").setAttribute("visibility", "hidden");
                   console.log("mouse out");
               });
             }    
@@ -711,6 +707,33 @@ function getRandomColor() {
     });
 }
 
+function buildTooltip(key, data){
+  var towerName;
+  var towerDamage;
+  var towerHealth;
+  var towerFireRate;
+  switch(data.stats.cost){
+    case 4:
+      towerName = "Assault Cannon - Level" + data.stats.level;
+      break;
+    case 12:
+      towerName = "Rocket Platform - Level" + data.stats.level;
+      break;
+    case 15:
+      towerName = "Plasma Lance - Level" + data.stats.level;
+      break;
+    default:
+      towerName = key.toString() + " - Level" + data.stats.level;
+  }
+
+  towerDamage = data.stats.dps;
+  towerFireRate = data.stats["effectDetails"][0].fireRate;
+  towerHealth = data["currentHealth"].toString() + "/" + data.stats.startingHealth.toString();
+  
+  var reConstructedObject = {"Name": towerName, "Damage": towerDamage, "Fire Rate": towerFireRate, "Health": towerHealth};
+  console.log(reConstructedObject);
+  return reConstructedObject;
+}
 
 function updateWorldModelWithKey(keyFrame){
     worldModel = JSON.parse(JSON.stringify(keyFrame));
@@ -786,6 +809,7 @@ function gameLoop(){
         updateDraw()
         lastKeyTime = nowTime;
         lastTweenTime = nowTime;
+        console.log(initialBuffer[keyFrameIndex]);
 
         timeToNextTween = initialBuffer[keyFrameIndex].tweens[0].game_time - initialBuffer[keyFrameIndex].game_time - tweenOffset;
 
