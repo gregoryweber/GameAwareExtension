@@ -575,7 +575,7 @@ function updateSVGBloomwoodElements() {
         var textContainer = foreignObject.querySelector(
           "#" + key + "-text-container"
         );
-        textContainer.innerHTML = value["dialogRendered"];
+        textContainer.innerHTML = value["dialogFull"];
         textContainer.style.fontSize = 12 + fontSizeChange + "px";
         textContainer.style.color = fontColor.toString();
         textContainer.style.fontFamily = fontType.toString();
@@ -713,9 +713,15 @@ function gameLoop() {
     if(initialBuffer[keyFrameIndex]["key"]["visualNovelText"]){
         if(!(initialBuffer[keyFrameIndex]["key"]["visualNovelText"]["dialogFull"] === newDialog)){
             newDialog = initialBuffer[keyFrameIndex]["key"]["visualNovelText"]["dialogFull"].toString();
-            dialogArray.push(newDialog);
+            if(!(dialogArray.includes(newDialog))){
+              dialogArray.push(newDialog);
+              if(isLiveDialog){
+                dialogArrayIndex = dialogArray.length -1;
+              }
+
+            }
+
             // console.log(dialogArray);
-            // dialogArrayIndex = dialogArray.length -1;
         }
     }
     timeToNextTween =
@@ -846,6 +852,8 @@ function changeLanguage(){
 
 var dialogArrayIndex = 0;
 function advanceDialogArray(){
+  isLiveDialog = false;
+  document.getElementById("dialogCheckbox").checked = false;;
     console.log(dialogArrayIndex);
     if(dialogArrayIndex < dialogArray.length-1){
         dialogArrayIndex++;
@@ -855,9 +863,19 @@ function advanceDialogArray(){
 
 function previousDialogArray(){
     console.log(dialogArrayIndex);
+    document.getElementById("dialogCheckbox").checked = false;;
+    isLiveDialog = false;
     if(dialogArrayIndex > 0){
         dialogArrayIndex--;
         console.log(dialogArrayIndex);
         console.log(dialogArray[dialogArrayIndex]);
     }
+}
+
+var isLiveDialog = true;
+function changeDialogSettings(){
+  isLiveDialog = document.getElementById("dialogCheckbox").checked;
+  if(isLiveDialog){
+    dialogArrayIndex = dialogArray.length-1;
+  }
 }
