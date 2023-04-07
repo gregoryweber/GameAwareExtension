@@ -605,8 +605,10 @@ function getRandomColor() {
 
         // Set the attributes of the text element
         textElement.setAttribute("id", "tooltip-tower-text");
-        textElement.setAttribute("width", "50");
-        textElement.setAttribute("height", "50");
+        // textElement.setAttribute("x",5);
+        // textElement.setAttribute("y",5);
+        textElement.setAttribute("width", "18%");
+        textElement.setAttribute("height", "18%");
         textElement.setAttribute("fill", "whitesmoke");
         textElement.setAttribute("background-color", "#000000");
         textElement.setAttribute("font-size", "14px");
@@ -617,6 +619,8 @@ function getRandomColor() {
          rectElement.setAttribute("stroke", "darkgrey");
          rectElement.setAttribute("stroke-width", "10px");
          rectElement.setAttribute("rx", 5);
+         rectElement.setAttribute("width", "20%");
+         rectElement.setAttribute("height", "25%");
          rectElement.setAttribute("ry", 200);
          rectElement.setAttribute("id", "tooltip-tower-rect");
 
@@ -691,10 +695,7 @@ function getRandomColor() {
                   else{
                     updateLine(anchorLine, towerX, towerY, towerX, towerY-8);
                   }
-                  towerX -= 12;
-                  towerY -= 29;
-                  gElement.setAttribute("x", towerX.toString()+"%");
-                  gElement.setAttribute("y", towerY.toString()+"%");
+                
                   gElement.setAttribute("class", "tooltip");
                   
                   if(!textElement){
@@ -717,14 +718,21 @@ function getRandomColor() {
                   });
                   
                   // Set the attributes of the rect element
-                  var bbox = textElement.getBBox();
+                  var toolTipBox = gElement.getBBox();
+                  var anchorBBox = anchorTooltip.getBBox();
                   if(!rectElement){
                     rectElement = document.getElementById("tooltip-tower-rect");
                   }
-                  rectElement.setAttribute("width", bbox.width + 20);
-                  rectElement.setAttribute("height", bbox.height + 10);
-                  rectElement.setAttribute("x", bbox.x-10);
-                  rectElement.setAttribute("y", bbox.y);
+                  // rectElement.setAttribute("width", bbox.width + 20);
+                  // rectElement.setAttribute("height", bbox.height + 10);
+                  // rectElement.setAttribute("x", bbox.x-10);
+                  // rectElement.setAttribute("y", bbox.y);
+                  // towerX -= bbox.width/2;
+                  // towerY -= bbox.height;
+
+
+                  gElement.setAttribute("x", anchorBBox.x - toolTipBox.width / 2);
+                  gElement.setAttribute("y", anchorBBox.y - toolTipBox.height);
                   if(isTowerDefenseVisible){
                     gElement.setAttribute("visibility", "visible");
                     anchorTower.setAttribute("visibility", "visible");
