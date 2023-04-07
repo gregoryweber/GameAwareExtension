@@ -96,7 +96,7 @@ function syncBuffer(){
     for( let i = 0; i < initialBuffer.length-1; i++){
         // if(actualTime - initialBuffer[i].game_time < ((1/key_rate) * 1000)){
         if(actualTime - initialBuffer[i+1].game_time < 0){
-            actualKeyPointer = i;
+            actualKeyPointer = i-1;
             break;
             // console.log("sync point found");
         }
@@ -110,7 +110,7 @@ function syncBuffer(){
     for( let i = 0; i < initialBuffer[actualKeyPointer].tweens.length-1; i++){
         // if(actualTime - initialBuffer[actualKeyPointer].tweens[i].game_time < (1/tween_rate * 1000)){
         if(actualTime - initialBuffer[actualKeyPointer].tweens[i+1].game_time < 0){
-            actualTweenPointer = i;
+            actualTweenPointer = i-1;
             break;
         }
     }
@@ -122,19 +122,48 @@ function syncBuffer(){
 
     initialBuffer.splice(0, actualKeyPointer);
     tweenIndex = actualTweenPointer;
-    keyFrameIndex = 1;
-    lastKeyTime = Date.now() - (actualTime - initialBuffer[keyFrameIndex-1].game_time);
-    lastTweenTime = Date.now() - (actualTime - initialBuffer[keyFrameIndex-1].tweens[tweenIndex].game_time);
-    timeToNextKey = initialBuffer[keyFrameIndex+1].game_time - initialBuffer[keyFrameIndex].game_time; 
-    if(initialBuffer[keyFrameIndex].tweens[tweenIndex+1]!=null){
-        timeToNextTween = initialBuffer[keyFrameIndex].tweens[tweenIndex+1].game_time - initialBuffer[keyFrameIndex].tweens[tweenIndex].game_time - tweenOffset;
+    keyFrameIndex = 0;
+    if(initialBuffer.length == 0){
+      console.log("NO FRAMES");
+    }
+    else if(initialBuffer.length == 1){
+      lastKeyTime = Date.now() - (actualTime - initialBuffer[0].game_time);
+      lastTweenTime = Date.now() - (actualTime - initialBuffer[0].tweens[tweenIndex].game_time);
+      timeToNextKey = 1/key_rate * 1000;
+      if(initialBuffer[0].tweens[tweenIndex+1]!=null){
+          timeToNextTween = initialBuffer[0].tweens[tweenIndex+1].game_time - initialBuffer[0].tweens[tweenIndex].game_time - tweenOffset;
+      }
+      else{
+          //todo use the key frame rate, cast to int
+          timeToNextTween = 1000 * 1000;
+      }
+    }
+    else if(initialBuffer.length == 2){
+      lastKeyTime = Date.now() - (actualTime - initialBuffer[0].game_time);
+      lastTweenTime = Date.now() - (actualTime - initialBuffer[0].tweens[tweenIndex].game_time);
+      timeToNextKey = initialBuffer[1].game_time - initialBuffer[0].game_time;
+      if(initialBuffer[0].tweens[tweenIndex+1]!=null){
+          timeToNextTween = initialBuffer[0].tweens[tweenIndex+1].game_time - initialBuffer[0].tweens[tweenIndex].game_time - tweenOffset;
+      }
+      else{
+          //todo use the key frame rate, cast to int
+          timeToNextTween = 1000 * 1000;
+      }
     }
     else{
-        //todo use the key frame rate, cast to int
-        timeToNextTween = 1000 * 1000;
+      lastKeyTime = Date.now() - (actualTime - initialBuffer[keyFrameIndex].game_time);
+      lastTweenTime = Date.now() - (actualTime - initialBuffer[keyFrameIndex].tweens[tweenIndex].game_time);
+      timeToNextKey = initialBuffer[keyFrameIndex+1].game_time - initialBuffer[keyFrameIndex].game_time; 
+      if(initialBuffer[keyFrameIndex].tweens[tweenIndex+1]!=null){
+          timeToNextTween = initialBuffer[keyFrameIndex].tweens[tweenIndex+1].game_time - initialBuffer[keyFrameIndex].tweens[tweenIndex].game_time - tweenOffset;
+      }
+      else{
+          //todo use the key frame rate, cast to int
+          timeToNextTween = 1000 * 1000;
+      }
     }
-    updateWorldModelWithKey(initialBuffer[keyFrameIndex+1]);
-    updateWorldModelWithTween(initialBuffer[keyFrameIndex].tweens[tweenIndex+1]);
+    updateWorldModelWithKey(initialBuffer[keyFrameIndex]);
+    updateWorldModelWithTween(initialBuffer[keyFrameIndex].tweens[tweenIndex]);
     updateDraw();
 }
 
