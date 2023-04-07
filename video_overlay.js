@@ -90,13 +90,14 @@ function syncBuffer(){
     //start_game_secs = Unity's frame of reference of time (all future game times are from this frame of reference)
     //broadcastLatency = number from Twitch, latency from the streamer to the viewer
     let actualTime = Date.now() - start_clock_secs - start_game_secs - (broadcastLatency * 1000);
-
+    // console.log(actualTime);
+    // console.log(initialBuffer);
     // Search initial buffer, find key within 1/key_frame_rate of the calculated keyTime
     // Target key frame should be the same as key time if we ignore the hundreds values (only the thousands are the seconds);
     for( let i = 0; i < initialBuffer.length-1; i++){
         // if(actualTime - initialBuffer[i].game_time < ((1/key_rate) * 1000)){
         if(actualTime - initialBuffer[i+1].game_time < 0){
-            actualKeyPointer = i-1;
+            actualKeyPointer = i;
             break;
             // console.log("sync point found");
         }
@@ -664,9 +665,9 @@ function getRandomColor() {
             // svgRect.setAttribute("stroke", "blue");
             // svgRect.setAttribute("stroke-width", "2");
             svgRect.setAttribute("position", "absolute");
-            if(key.includes("Tower")){
+            if(value["stats"]){
               svgRect.style.pointerEvents = "all"; // prevent stroke from triggering mouse events
-              
+              var tooltipData = buildTooltip(key, value);
               svgRect.addEventListener("mousemove", (evt) => {                  
                   var towerX = parseFloat(svgRect.getAttribute("x")) + parseFloat(svgRect.getAttribute("width"))/2;
                   var towerY = parseFloat(svgRect.getAttribute("y")) + parseFloat(svgRect.getAttribute("height"))/2;
@@ -703,10 +704,9 @@ function getRandomColor() {
                   }
                   textElement.textContent = "";
                   
-                  var tooltipData = buildTooltip(key, value);
                   Object.keys(tooltipData).forEach(function(key, index) {
                     var tspan = document.createElementNS("http://www.w3.org/2000/svg", "tspan");
-                    tspan.setAttribute("x", 0);
+                    tspan.setAttribute("x", 10);
                     tspan.setAttribute("dy", "1.4em"); // Line spacing
                     if(!(key.includes("Name"))){
                       tspan.textContent = key + ": " + tooltipData[key];
@@ -807,28 +807,31 @@ function buildEnemyInformation(enemy){
 
 function buildTooltip(key, data){
   var towerName;
-  var towerDamage;
+  var towerDps;
   var towerHealth;
   var towerFireRate;
-  switch(data.stats.cost){
-    case 4:
-      towerName = "Assault Cannon - Level" + data.stats.level;
-      break;
-    case 12:
-      towerName = "Rocket Platform - Level" + data.stats.level;
-      break;
-    case 15:
-      towerName = "Plasma Lance - Level" + data.stats.level;
-      break;
-    default:
-      towerName = key.toString() + " - Level" + data.stats.level;
-  }
-
-  towerDamage = data.stats.dps;
+  var level;
+  // switch(data.stats.cost){
+  //   case 4:
+  //     towerName = "Assault Cannon - Level" + data.stats.level;
+  //     break;
+  //   case 12:
+  //     towerName = "Rocket Platform - Level" + data.stats.level;
+  //     break;
+  //   case 15:
+  //     towerName = "Plasma Lance - Level" + data.stats.level;
+  //     break;
+  //   default:
+  //     towerName = key.toString() + " - Level" + data.stats.level;
+  // }
+  towerName = data.type
+  level = data.stats.level
+  towerDps = data.stats.dps;
   towerFireRate = data.stats["effectDetails"][0].fireRate;
   towerHealth = data["currentHealth"].toString() + "/" + data.stats.startingHealth.toString();
   
-  var reConstructedObject = {"Name": towerName, "Damage": towerDamage, "Fire Rate": towerFireRate, "Health": towerHealth};
+  var reConstructedObject = {"Name": towerName, "DPS": towerDps, "Fire Rate": towerFireRate, "Health": towerHealth, "Level": level};
+  console.log(reConstructedObject);
   return reConstructedObject;
 }
 
