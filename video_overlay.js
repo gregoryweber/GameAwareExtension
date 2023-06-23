@@ -8,8 +8,8 @@ let broadcastLatency;
 let start_game_secs;
 let start_clock_secs;
 let latest_game_secs;
-let tween_rate;
-let key_rate;
+let tween_rate = 24;
+let key_rate = 1;
 let screen_width;
 let screen_height;
 let initialBuffer = [];
@@ -48,7 +48,7 @@ function getStartData(){
 }
 // Initial latest frame get request to figure out current latest, used to build back buffer
 function setUpInitialBuffer(){
-    let backPadding = parseInt(broadcastLatency) + 3; // pad an extra few seconds
+    let backPadding = parseInt(broadcastLatency)*(2/key_rate); // pad an extra few seconds
     $.ajax({
         type: 'GET',
         url: location.protocol + '//localhost:3000/initialBuffer?padding='+backPadding,
@@ -79,61 +79,77 @@ function getLatestData(){
 }
 
 function syncBuffer(){
-    console.log("sync called");
+    //console.log("sync called");
     let actualKeyPointer;
     let actualTweenPointer;
     initialBuffer.push.apply(initialBuffer, forwardBuffer);
     forwardBuffer.length = 0;
 
+
     //Date.now() = current time in viewer's frame of reference
     //start_clock_secs = local time stamp from the streamer's computer
     //start_game_secs = Unity's frame of reference of time (all future game times are from this frame of reference)
     //broadcastLatency = number from Twitch, latency from the streamer to the viewer
-    let actualTime = Date.now() - start_clock_secs - start_game_secs - (broadcastLatency * 1000);
+    let dateNow = Date.now();
+    let actualTime = dateNow - start_clock_secs - start_game_secs - (broadcastLatency * 1000);
+
     
     // Search initial buffer, find key within 1/key_frame_rate of the calculated keyTime
     // Target key frame should be the same as key time if we ignore the hundreds values (only the thousands are the seconds);
-    for( let i = 0; i < initialBuffer.length-1; i++){
+    // console.log("pre-initialBuffer: ", initialBuffer);
+    actualKeyPointer = initialBuffer.length-1;
+    for(let i = 0; i < initialBuffer.length-1; i++){
         // if(actualTime - initialBuffer[i].game_time < ((1/key_rate) * 1000)){
-        if(actualTime - initialBuffer[i+1].game_time < 0){
-            actualKeyPointer = i;
+        // console.log(`actual:    ${actualTime}`);
+        // console.log(`game_time: ${initialBuffer[i].game_time}`);
+        //console.log(`actual - game_time = ${actualTime-initialBuffer[i].game_time}`)
+        if(actualTime < initialBuffer[i+1].game_time){ 
+            console.log("synced within " + (actualTime - initialBuffer[i+1].game_time) + "ms")
+            actualKeyPointer = i+1;
             break;
             // console.log("sync point found");
         }
     }
-
-    if(actualKeyPointer == undefined){
-        console.log("Error: no key pointer found");
-        actualKeyPointer = initialBuffer.length-1;
-    }
+    console.log(`sync point at ${actualKeyPointer}/${initialBuffer.length-1}:`)
     //ToDo: Deal with the case where there are no tweens
+    console.log(initialBuffer[actualKeyPointer])
+    if (!initialBuffer[actualKeyPointer].tweens){
+        console.log("Error: Tween object cannot be found");
+        return;
+    }
     for( let i = 0; i < initialBuffer[actualKeyPointer].tweens.length-1; i++){
         // if(actualTime - initialBuffer[actualKeyPointer].tweens[i].game_time < (1/tween_rate * 1000)){
+        console.log(`tween difference: ${actualTime} - ${initialBuffer[actualKeyPointer].tweens[i+1].game_time} = ${actualTime - initialBuffer[actualKeyPointer].tweens[i+1].game_time} `)
         if(actualTime - initialBuffer[actualKeyPointer].tweens[i+1].game_time < 0){
             actualTweenPointer = i;
             break;
         }
     }
-
-    if(actualTweenPointer == undefined){
+    
+    if(!actualTweenPointer){
         console.log("Error: no tween pointer found");
         actualTweenPointer = initialBuffer[actualKeyPointer].tweens.length-1;
     }
-
-    initialBuffer.splice(0, actualKeyPointer);
+    initialBuffer.splice(0, initialBuffer.length-1);
     tweenIndex = actualTweenPointer;
-    keyFrameIndex = 1;
-    lastKeyTime = Date.now() - (actualTime - initialBuffer[keyFrameIndex-1].game_time);
-    lastTweenTime = Date.now() - (actualTime - initialBuffer[keyFrameIndex-1].tweens[tweenIndex].game_time);
-    timeToNextKey = initialBuffer[keyFrameIndex+1].game_time - initialBuffer[keyFrameIndex].game_time; 
-    if(initialBuffer[keyFrameIndex].tweens[tweenIndex+1]!=null){
-        timeToNextTween = initialBuffer[keyFrameIndex].tweens[tweenIndex+1].game_time - initialBuffer[keyFrameIndex].tweens[tweenIndex].game_time - tweenOffset;
+    keyFrameIndex = 0;
+
+    if (initialBuffer) {
+        console.log(initialBuffer[0])
+        lastKeyTime = Date.now() - (actualTime - initialBuffer[0].game_time);
+        lastTweenTime = Date.now() - (actualTime - initialBuffer[0].tweens[tweenIndex].game_time);
+        timeToNextKey = 1000/key_rate;
+        if(initialBuffer[0].tweens[tweenIndex+1]){
+            timeToNextTween = initialBuffer[0].tweens[tweenIndex+1].game_time - initialBuffer[0].tweens[tweenIndex].game_time - tweenOffset;
+        }
+        else{
+            timeToNextTween = Math.floor(1000/tween_rate);
+        }
     }
-    else{
-        //todo use the key frame rate, cast to int
-        timeToNextTween = 1000 * 1000;
-    }
+    
+
     updateWorldModelWithKey(initialBuffer[keyFrameIndex]);
+    //updateWorldModelWithTween(initialBuffer[keyFrameIndex].tweens[tweenIndex]);
     updateWorldModelWithTween(initialBuffer[keyFrameIndex].tweens[tweenIndex]);
     updateSvgRects();
 }
@@ -296,14 +312,27 @@ function getRandomColor() {
   
 
 function updateWorldModelWithKey(keyFrame){
+    if (!keyFrame) {
+        console.log("Error: No key frame found");
+        return;
+    }
     worldModel = JSON.parse(JSON.stringify(keyFrame));
 
 }
 
 function updateWorldModelWithTween(tweenFrame){
+    if (!tweenFrame) {
+        console.log("Error: No tween frame found");
+        return;
+    }
     for(let item in tweenFrame){
         for(let attribute in tweenFrame[item]){
-            worldModel["key"][item][attribute] = JSON.parse(JSON.stringify(tweenFrame[item][attribute]));
+            if (worldModel["key"][item]) {
+                worldModel["key"][item][attribute] = JSON.parse(JSON.stringify(tweenFrame[item][attribute]));
+            } else {
+                console.log(`Error: Cannot find ${item} in key`)
+            }
+           
         }
     }
     worldModel["game_time"] = JSON.parse(JSON.stringify(tweenFrame["game_time"]));
@@ -332,47 +361,69 @@ function displayOverLayDebug(){
     textSvg.textContent = string;
 }
 
-var counter;
+var counter = 0;
 var nowTime;
 var tweenOffset = 0;
+var catchUpTime = 0;
+var timeDiff = 0;
 function gameLoop(){
     nowTime = Date.now();
+
     // if(keyFrameIndex < 0 || tweenIndex >= initialBuffer[keyFrameIndex].tweens.length-1){
-    if(nowTime - lastKeyTime >= timeToNextKey){
-        // console.log("key frame update");
-        keyFrameIndex++;
+    if(nowTime - lastKeyTime >= timeToNextKey && forwardBuffer[keyFrameIndex]){
+        catchUpTime += nowTime-lastKeyTime-timeToNextKey;
+        // console.log("key frame: " + keyFrameIndex);
+        let dateNow = Date.now();
+        let actualTime = dateNow - start_clock_secs - start_game_secs - (broadcastLatency * 1000);
+        timeDiff = actualTime - forwardBuffer[keyFrameIndex].game_time
+        console.log(`time difference: ${timeDiff}`);
+        let target = 0;
+        let range = 200;
+        if (Math.abs(timeDiff-target) > range) {
+            timeToNextKey -= timeDiff - target
+        } else {
+            timeToNextKey = 1000/key_rate
+        }
         tweenIndex = -1;
-        updateWorldModelWithKey(initialBuffer[keyFrameIndex]);
-        updateSvgRects();
+        //console.log(`key ${keyFrameIndex}`)
+        updateWorldModelWithKey(forwardBuffer[keyFrameIndex]);
+        updateWorldModelWithTween(forwardBuffer[keyFrameIndex].tweens[0]);
+        updateSvgRects()
         lastKeyTime = nowTime;
         lastTweenTime = nowTime;
+        
 
-        timeToNextTween = initialBuffer[keyFrameIndex].tweens[0].game_time - initialBuffer[keyFrameIndex].game_time - tweenOffset;
+        timeToNextTween = forwardBuffer[keyFrameIndex].tweens[0].game_time - forwardBuffer[keyFrameIndex].game_time - tweenOffset - catchUpTime;
 
-        if(initialBuffer[keyFrameIndex+1] != null){
-            timeToNextKey = initialBuffer[keyFrameIndex+1].game_time - initialBuffer[keyFrameIndex].game_time; 
-        }
-        else{
+        let syncRange = 500;
+        if (Math.abs(timeDiff-target) >= syncRange){
             //TODO: Check for end frame
+            console.log("Syncing!")
             syncBuffer();
         }
-    }    
-    if (nowTime - lastTweenTime >= timeToNextTween){
+        //console.log("index ", keyFrameIndex, ": ", forwardBuffer[keyFrameIndex]);
+        keyFrameIndex++;        
+    }
+    //console.log(`tween ${tweenIndex}: ${nowTime-lastTweenTime} >= ${timeToNextTween}`);
+    if (nowTime - lastTweenTime >= timeToNextTween && forwardBuffer[keyFrameIndex-1] && tweenIndex < tween_rate){
+        catchUpTime = nowTime-lastTweenTime-Math.max(timeToNextTween, 0);
+        //console.log(`${nowTime}-${lastTweenTime}-${Math.max(timeToNextTween, 0)}=${catchUpTime}`)
         tweenIndex++;
-        updateWorldModelWithTween(initialBuffer[keyFrameIndex].tweens[tweenIndex]);
+        //console.log(`${keyFrameIndex-1}[${tweenIndex}]: ${nowTime-lastTweenTime} >= ${timeToNextTween} (-${catchUpTime})`);
+        updateWorldModelWithTween(forwardBuffer[keyFrameIndex-1].tweens[tweenIndex]);
         lastTweenTime = nowTime;
         updateSvgRects();
-        if(initialBuffer[keyFrameIndex].tweens[tweenIndex+1]!=null){
-            timeToNextTween = initialBuffer[keyFrameIndex].tweens[tweenIndex+1].game_time - initialBuffer[keyFrameIndex].tweens[tweenIndex].game_time - tweenOffset;
+        if(forwardBuffer[keyFrameIndex-1].tweens[tweenIndex+1]){
+            timeToNextTween = forwardBuffer[keyFrameIndex-1].tweens[tweenIndex+1].game_time - forwardBuffer[keyFrameIndex-1].tweens[tweenIndex].game_time - tweenOffset - catchUpTime;
         }
         else{
-            //todo use the key frame rate, cast to int
-            timeToNextTween = 1000 * 1000;
+            timeToNextTween = Math.floor(1000/tween_rate);
         }
         timeToNextTween -= Date.now() - nowTime;
     }
     // displayOverLayDebug();
     window.requestAnimationFrame(gameLoop);
+    
 }
 
 function incrementTweenOffset() {
