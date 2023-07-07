@@ -4,6 +4,11 @@ var bodyParser = require("body-parser");
 const redis = require("redis");
 const cors = require("cors");
 
+// import express from 'express';
+// import bodyParser from 'body-parser';
+// import redis from 'redis';
+// import cors from 'cors';
+
 /* Express Step 1: Creating an express application */
 var app = express();
 
@@ -63,7 +68,7 @@ app.get("/initialBuffer", async(req, res) =>{
 
 // REDIS STUFF
 const redisPass = "cmuludolab";
-const redisURI = "52.15.151.251";
+const redisURI = "18.117.114.109";
 const redisPort = 6379;
 let isRedisConnected = false;
 var client;
