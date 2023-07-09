@@ -13,7 +13,7 @@ var port = 3000;
 // Asking CORS to whitelist the URL that the front end is served from
 app.use(
   cors({
-    origin: "http://127.0.0.1:8080", // Update this with front end server
+    origin: "http://localhost:8080", // Update this with front end server
   })
 );
 
@@ -63,7 +63,7 @@ app.get("/initialBuffer", async(req, res) =>{
 
 // REDIS STUFF
 const redisPass = "cmuludolab";
-const redisURI = "18.218.204.155";
+const redisURI = "18.223.143.197";
 const redisPort = 6379;
 let isRedisConnected = false;
 var client;

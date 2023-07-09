@@ -8,8 +8,9 @@ let broadcastLatency;
 let start_game_secs;
 let start_clock_secs;
 let latest_game_secs;
-let tween_rate;
-let key_rate;
+let tween_rate = 24;
+let key_rate = 1;
+let target = 300;
 let screen_width;
 let screen_height;
 let initialBuffer = [];
@@ -48,27 +49,22 @@ function getStartData() {
   });
 }
 // Initial latest frame get request to figure out current latest, used to build back buffer
-function setUpInitialBuffer() {
-  let backPadding = parseInt(broadcastLatency) + 3; // pad an extra few seconds
-  $.ajax({
-    type: "GET",
-    url:
-      location.protocol +
-      "//localhost:3000/initialBuffer?padding=" +
-      backPadding,
-    async: true,
-    contentType: "application/json",
-    headers: {
-      authorization: "Bearer " + window.Twitch.ext.viewer.sessionToken,
-    },
-    success: function (res) {
-      initialBuffer = res;
-    },
-    complete: function () {
-      setInterval(getLatestData, (1 / key_rate) * 1000);
-      startGameLoop();
-    },
-  });
+function setUpInitialBuffer(){
+    let backPadding = parseInt(broadcastLatency)*(2/key_rate); // pad an extra few seconds
+    $.ajax({
+        type: 'GET',
+        url: location.protocol + '//localhost:3000/initialBuffer?padding='+backPadding,
+        async:true,
+        contentType: 'application/json',
+        headers: { authorization: 'Bearer ' + window.Twitch.ext.viewer.sessionToken},
+        success: function(res) {
+          initialBuffer = res;
+        },
+        complete: function(){
+            setInterval(getLatestData, 1/key_rate *1000);
+            startGameLoop();            
+        } 
+    });
 }
 
 function getLatestData() {
@@ -85,78 +81,81 @@ function getLatestData() {
   });
 }
 
-function syncBuffer() {
-  console.log("sync called");
-  let actualKeyPointer;
-  let actualTweenPointer;
-  initialBuffer.push.apply(initialBuffer, forwardBuffer);
-  forwardBuffer.length = 0;
+function syncBuffer(){
+    //console.log("sync called");
+    let actualKeyPointer;
+    let actualTweenPointer;
+    initialBuffer.push.apply(initialBuffer, forwardBuffer);
+    forwardBuffer.length = 0;
 
-  //Date.now() = current time in viewer's frame of reference
-  //start_clock_secs = local time stamp from the streamer's computer
-  //start_game_secs = Unity's frame of reference of time (all future game times are from this frame of reference)
-  //broadcastLatency = number from Twitch, latency from the streamer to the viewer
-  let actualTime =
-    Date.now() - start_clock_secs - start_game_secs - broadcastLatency * 1000;
 
-  // Search initial buffer, find key within 1/key_frame_rate of the calculated keyTime
-  // Target key frame should be the same as key time if we ignore the hundreds values (only the thousands are the seconds);
-  for (let i = 0; i < initialBuffer.length - 1; i++) {
-    // if(actualTime - initialBuffer[i].game_time < ((1/key_rate) * 1000)){
-    if (actualTime - initialBuffer[i + 1].game_time < 0) {
-      actualKeyPointer = i;
-      break;
-      // console.log("sync point found");
+    //Date.now() = current time in viewer's frame of reference
+    //start_clock_secs = local time stamp from the streamer's computer
+    //start_game_secs = Unity's frame of reference of time (all future game times are from this frame of reference)
+    //broadcastLatency = number from Twitch, latency from the streamer to the viewer
+    let dateNow = Date.now();
+    let actualTime = dateNow - start_clock_secs - start_game_secs - (broadcastLatency * 1000);
+
+    
+    // Search initial buffer, find key within 1/key_frame_rate of the calculated keyTime
+    // Target key frame should be the same as key time if we ignore the hundreds values (only the thousands are the seconds);
+    // console.log("pre-initialBuffer: ", initialBuffer);
+    actualKeyPointer = initialBuffer.length-1;
+    // for(let i = 0; i < initialBuffer.length; i++){
+    //     // if(actualTime - initialBuffer[i].game_time < ((1/key_rate) * 1000)){
+    //     // console.log(`actual:    ${actualTime}`);
+    //     // console.log(`game_time: ${initialBuffer[i].game_time}`);
+    //     //console.log(`actual - game_time = ${actualTime-initialBuffer[i].game_time}`)
+    //     if(actualTime - initialBuffer[i].game_time < target + 1000){ 
+    //         console.log("synced within " + (actualTime - initialBuffer[i].game_time) + "ms")
+    //         actualKeyPointer = i;
+    //         break;
+    //         // console.log("sync point found");
+    //     }
+    // }
+    // console.log(`sync point at ${actualKeyPointer}/${initialBuffer.length-1}:`)
+    //ToDo: Deal with the case where there are no tweens
+    console.log(initialBuffer[actualKeyPointer])
+    if (!initialBuffer[actualKeyPointer].tweens){
+        console.log("Error: Tween object cannot be found");
+        return;
     }
-  }
-
-  if (actualKeyPointer == undefined) {
-    console.log("Error: no key pointer found");
-    actualKeyPointer = initialBuffer.length - 1;
-  }
-  //ToDo: Deal with the case where there are no tweens
-  for (let i = 0; i < initialBuffer[actualKeyPointer].tweens.length - 1; i++) {
-    // if(actualTime - initialBuffer[actualKeyPointer].tweens[i].game_time < (1/tween_rate * 1000)){
-    if (
-      actualTime - initialBuffer[actualKeyPointer].tweens[i + 1].game_time <
-      0
-    ) {
-      actualTweenPointer = i;
-      break;
+    actualTweenPointer = 0;
+    for( let i = 0; i < initialBuffer[actualKeyPointer].tweens.length-1; i++){
+        // if(actualTime - initialBuffer[actualKeyPointer].tweens[i].game_time < (1/tween_rate * 1000)){
+        console.log(`tween difference: ${actualTime} - ${initialBuffer[actualKeyPointer].tweens[i+1].game_time} = ${actualTime - initialBuffer[actualKeyPointer].tweens[i+1].game_time} `)
+        if(actualTime - initialBuffer[actualKeyPointer].tweens[i+1].game_time < -target){
+            actualTweenPointer = i;
+            break;
+        }
     }
-  }
+    
+    // if(!actualTweenPointer){
+    //     console.log("Error: no tween pointer found");
+    //     actualTweenPointer = initialBuffer[actualKeyPointer].tweens.length-1;
+    // }
+    initialBuffer.splice(0, initialBuffer.length-1);
+    tweenIndex = actualTweenPointer;
+    keyFrameIndex = 0;
 
-  if (actualTweenPointer == undefined) {
-    console.log("Error: no tween pointer found");
-    actualTweenPointer = initialBuffer[actualKeyPointer].tweens.length - 1;
-  }
+    if (initialBuffer) {
+        console.log(initialBuffer[0])
+        lastKeyTime = Date.now() - (actualTime - initialBuffer[0].game_time);
+        lastTweenTime = Date.now() - (actualTime - initialBuffer[0].tweens[tweenIndex].game_time);
+        timeToNextKey = 1000/key_rate;
+        if(initialBuffer[0].tweens[tweenIndex+1]){
+            timeToNextTween = initialBuffer[0].tweens[tweenIndex+1].game_time - initialBuffer[0].tweens[tweenIndex].game_time - tweenOffset;
+        }
+        else{
+            timeToNextTween = Math.floor(1000/tween_rate);
+        }
+    }
+    
 
-  initialBuffer.splice(0, actualKeyPointer);
-  tweenIndex = actualTweenPointer;
-  keyFrameIndex = 1;
-  lastKeyTime =
-    Date.now() - (actualTime - initialBuffer[keyFrameIndex - 1].game_time);
-  lastTweenTime =
-    Date.now() -
-    (actualTime -
-      initialBuffer[keyFrameIndex - 1].tweens[tweenIndex].game_time);
-  timeToNextKey =
-    initialBuffer[keyFrameIndex + 1].game_time -
-    initialBuffer[keyFrameIndex].game_time;
-  if (initialBuffer[keyFrameIndex].tweens[tweenIndex + 1] != null) {
-    timeToNextTween =
-      initialBuffer[keyFrameIndex].tweens[tweenIndex + 1].game_time -
-      initialBuffer[keyFrameIndex].tweens[tweenIndex].game_time -
-      tweenOffset;
-  } else {
-    //todo use the key frame rate, cast to int
-    timeToNextTween = 1000 * 1000;
-  }
-  updateWorldModelWithKey(initialBuffer[keyFrameIndex + 1]);
-  updateWorldModelWithTween(
-    initialBuffer[keyFrameIndex].tweens[tweenIndex + 1]
-  );
-  updateDraw();
+    updateWorldModelWithKey(initialBuffer[keyFrameIndex]);
+    //updateWorldModelWithTween(initialBuffer[keyFrameIndex].tweens[tweenIndex]);
+    updateWorldModelWithTween(initialBuffer[keyFrameIndex].tweens[tweenIndex]);
+    updateDraw();
 }
 
 // TODO: Be more consistent with var/let use
@@ -531,7 +530,7 @@ function updateSVGBloomwoodElements() {
         var textContainer = foreignObject.querySelector(
           "#" + key + "-text-container"
         );
-        translateText(dialogArray[dialogArrayIndex], target)
+        translateText(dialogArray[dialogArrayIndex], langTarget)
         .then((translatedText) => {
           textContainer.innerHTML = translatedText;
         })
@@ -598,34 +597,37 @@ function updateSVGBloomwoodElements() {
 }
 
 function getRandomColor() {
-  const colors = [
-    "#e6194b",
-    "#3cb44b",
-    "#ffe119",
-    "#0082c8",
-    "#f58231",
-    "#911eb4",
-  ];
-  return colors[Math.floor(Math.random() * colors.length)];
-}
+    const colors = ['#e6194b', '#3cb44b', '#ffe119', '#0082c8', '#f58231', '#911eb4'];
+    return colors[Math.floor(Math.random() * colors.length)];
+  }
+  
 
-function updateWorldModelWithKey(keyFrame) {
-  worldModel = JSON.parse(JSON.stringify(keyFrame));
-}
-
-function updateWorldModelWithTween(tweenFrame) {
-  for (let item in tweenFrame) {
-    for (let attribute in tweenFrame[item]) {
-      worldModel["key"][item][attribute] = JSON.parse(
-        JSON.stringify(tweenFrame[item][attribute])
-      );
+function updateWorldModelWithKey(keyFrame){
+    if (!keyFrame) {
+        console.log("Error: No key frame found");
+        return false;
     }
-  }
-  if (tweenFrame) {
-    worldModel["game_time"] = JSON.parse(
-      JSON.stringify(tweenFrame["game_time"])
-    );
-  }
+    worldModel = JSON.parse(JSON.stringify(keyFrame));
+    return true
+}
+
+function updateWorldModelWithTween(tweenFrame){
+    if (!tweenFrame) {
+        console.log("Error: No tween frame found");
+        return false;
+    }
+    for(let item in tweenFrame){
+        for(let attribute in tweenFrame[item]){
+            if (worldModel["key"][item]) {
+                worldModel["key"][item][attribute] = JSON.parse(JSON.stringify(tweenFrame[item][attribute]));
+            } else {
+                console.log(`Error: Cannot find ${item} in key`)
+            }
+           
+        }
+    }
+    worldModel["game_time"] = JSON.parse(JSON.stringify(tweenFrame["game_time"]));
+    return true
 }
 
 function startGameLoop() {
@@ -693,68 +695,88 @@ function updateDraw() {
   }
 }
 
-var newDialog = "";
-var dialogArray = [];
-var counter;
+var counter = 0;
 var nowTime;
 var tweenOffset = 0;
-function gameLoop() {
-  nowTime = Date.now();
-  // if(keyFrameIndex < 0 || tweenIndex >= initialBuffer[keyFrameIndex].tweens.length-1){
-  if (nowTime - lastKeyTime >= timeToNextKey) {
-    // console.log("key frame update");
-    keyFrameIndex++;
-    tweenIndex = -1;
-    updateWorldModelWithKey(initialBuffer[keyFrameIndex]);
-    updateDraw();
-    lastKeyTime = nowTime;
-    lastTweenTime = nowTime;
-    
-    if(initialBuffer[keyFrameIndex]["key"]["visualNovelText"]){
-        if(!(initialBuffer[keyFrameIndex]["key"]["visualNovelText"]["dialogFull"] === newDialog)){
-            newDialog = initialBuffer[keyFrameIndex]["key"]["visualNovelText"]["dialogFull"].toString();
-            if(!(dialogArray.includes(newDialog))){
-              dialogArray.push(newDialog);
-              if(isLiveDialog){
-                dialogArrayIndex = dialogArray.length -1;
-              }
+var catchUpTime = 0;
+var timeDiff = 0;
+var dialogArray = []
+var newDialog = "";
+function gameLoop(){
+    nowTime = Date.now();
 
-            }
-
-            // console.log(dialogArray);
+    // if(keyFrameIndex < 0 || tweenIndex >= initialBuffer[keyFrameIndex].tweens.length-1){
+    if(nowTime - lastKeyTime >= timeToNextKey && forwardBuffer[keyFrameIndex]){
+        catchUpTime += nowTime-lastKeyTime-timeToNextKey;
+        // console.log("key frame: " + keyFrameIndex);
+        let dateNow = Date.now();
+        let actualTime = dateNow - start_clock_secs - start_game_secs - (broadcastLatency * 1000);
+        timeDiff = actualTime - forwardBuffer[keyFrameIndex].game_time
+        console.log(`time difference: ${timeDiff}`);
+        let range = 200;
+        if (Math.abs(timeDiff-target) > range) {
+            timeToNextKey -= timeDiff - target
+            console.log(`timeToNextKey: ${timeToNextKey}`)
+        } else {
+            timeToNextKey = 1000/key_rate
         }
-    }
-    timeToNextTween =
-      initialBuffer[keyFrameIndex].tweens[0].game_time -
-      initialBuffer[keyFrameIndex].game_time -
-      tweenOffset;
+        tweenIndex = 0;
+        //console.log(`key ${keyFrameIndex}`)
+        updateWorldModelWithKey(forwardBuffer[keyFrameIndex]);
+        //updateWorldModelWithTween(forwardBuffer[keyFrameIndex].tweens[0]);
+        updateDraw()
+        lastKeyTime = nowTime;
+        lastTweenTime = nowTime;
+        console.log(forwardBuffer[keyFrameIndex])
+        if(forwardBuffer[keyFrameIndex]["key"]["visualNovelText"]){
+            if(!(forwardBuffer[keyFrameIndex]["key"]["visualNovelText"]["dialogFull"] === newDialog)){
+                newDialog = forwardBuffer[keyFrameIndex]["key"]["visualNovelText"]["dialogFull"].toString();
+                if(!(dialogArray.includes(newDialog))){
+                  dialogArray.push(newDialog);
+                  if(isLiveDialog){
+                    dialogArrayIndex = dialogArray.length -1;
+                  }
+    
+                }    
+            }
+        }
 
-    if (initialBuffer[keyFrameIndex + 1] != null) {
-      timeToNextKey =
-        initialBuffer[keyFrameIndex + 1].game_time -
-        initialBuffer[keyFrameIndex].game_time;
-    } else {
-      //TODO: Check for end frame
-      syncBuffer();
+        timeToNextTween = forwardBuffer[keyFrameIndex].tweens[0].game_time - forwardBuffer[keyFrameIndex].game_time - tweenOffset - catchUpTime;
+
+        let syncRange = 500;
+        if (forwardBuffer.length > 2 && Math.abs(timeDiff-target) >= syncRange){
+            //TODO: Check for end frame
+            console.log("Syncing!")
+            syncBuffer();
+        }
+        //console.log("index ", keyFrameIndex, ": ", forwardBuffer[keyFrameIndex]);
+        keyFrameIndex++;        
     }
-  }
-  if (nowTime - lastTweenTime >= timeToNextTween) {
-    tweenIndex++;
-    updateWorldModelWithTween(initialBuffer[keyFrameIndex].tweens[tweenIndex]);
-    lastTweenTime = nowTime;
-    updateDraw();
-    if (initialBuffer[keyFrameIndex].tweens[tweenIndex + 1] != null) {
-      timeToNextTween =
-        initialBuffer[keyFrameIndex].tweens[tweenIndex + 1].game_time -
-        initialBuffer[keyFrameIndex].tweens[tweenIndex].game_time -
-        tweenOffset;
-    } else {
-      //todo use the key frame rate, cast to int
-      timeToNextTween = 1000 * 1000;
+    //console.log(`tween ${tweenIndex}: ${nowTime-lastTweenTime} >= ${timeToNextTween}`);
+    if (nowTime - lastTweenTime >= timeToNextTween && forwardBuffer[keyFrameIndex-1] && tweenIndex < tween_rate){
+        catchUpTime = nowTime-lastTweenTime-Math.max(timeToNextTween, 0);
+        //console.log(`${nowTime}-${lastTweenTime}-${Math.max(timeToNextTween, 0)}=${catchUpTime}`)
+        
+        //console.log(`${keyFrameIndex-1}[${tweenIndex}]: ${nowTime-lastTweenTime} >= ${timeToNextTween} (-${catchUpTime})`);
+        if (!updateWorldModelWithTween(forwardBuffer[keyFrameIndex-1].tweens[tweenIndex])) {
+            console.log(tweenIndex ,forwardBuffer[keyFrameIndex-1].tweens)
+        }
+        
+        // updateWorldModelWithTween(forwardBuffer[keyFrameIndex-1].tweens[tweenIndex]);
+        lastTweenTime = nowTime;
+        updateDraw();
+        if(forwardBuffer[keyFrameIndex-1].tweens[tweenIndex+1]){
+            timeToNextTween = forwardBuffer[keyFrameIndex-1].tweens[tweenIndex+1].game_time - forwardBuffer[keyFrameIndex-1].tweens[tweenIndex].game_time - tweenOffset - catchUpTime;
+        }
+        else{
+            timeToNextTween = Math.floor(1000/tween_rate);
+        }
+        timeToNextTween -= Date.now() - nowTime;
+        tweenIndex++;
     }
-    timeToNextTween -= Date.now() - nowTime;
-  }
-  window.requestAnimationFrame(gameLoop);
+    // displayOverLayDebug();
+    window.requestAnimationFrame(gameLoop);
+    
 }
 
 function incrementTweenOffset() {
@@ -842,12 +864,11 @@ function translateText(text, target) {
       })
       .catch(error => console.error(error));
   }
-  
 
-var target = "en";
+var langTarget = "en";
 function changeLanguage(){
     var languageSelect = document.getElementById("language-select");
-    target = languageSelect.value;
+    langTarget = languageSelect.value;
 }
 
 var dialogArrayIndex = 0;
