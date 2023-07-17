@@ -708,7 +708,12 @@ var newDialog = "";
 function gameLoop(){
     nowTime = Date.now();
 
-    if(nowTime - lastKeyTime >= timeToNextKey && forwardBuffer[keyFrameIndex]){
+    if (bloomwoodCheckbox.checked && forwardBuffer[keyFrameIndex]) {
+      isBloomwoodVisible = forwardBuffer[keyFrameIndex].key.visualNovelText != undefined
+    }
+    
+    if (nowTime - lastKeyTime >= timeToNextKey && forwardBuffer[keyFrameIndex]){
+        console.log(forwardBuffer[keyFrameIndex])
         catchUpTime += nowTime-lastKeyTime-timeToNextKey;
         let dateNow = Date.now();
         let actualTime = dateNow - start_clock_secs - start_game_secs - (broadcastLatency * 1000);
@@ -752,7 +757,7 @@ function gameLoop(){
             // console.log("Syncing!")
             //syncBuffer();
         }
-        keyFrameIndex++;        
+        keyFrameIndex++;
     }
     if (nowTime - lastTweenTime >= timeToNextTween && forwardBuffer[keyFrameIndex-1] && tweenIndex < tween_rate){
         catchUpTime = nowTime-lastTweenTime-Math.max(timeToNextTween, 0);
@@ -792,10 +797,12 @@ function displayDebugOverlay() {
   console.log(isDebugVisible);
 }
 
+var bloomwoodCheckbox = {};
+var debugCheckbox = {};
 function changeOverlay() {
-  const debugCheckbox = document.querySelector('input[value="debug"]');
+  debugCheckbox = document.querySelector('input[value="debug"]');
   // const mazeCheckbox = document.querySelector('input[value="maze"]');
-  const bloomwoodCheckbox = document.querySelector('input[value="bloomwood"]');
+  bloomwoodCheckbox = document.querySelector('input[value="bloomwood"]');
 
   // Toggle the visibility of all the selected overlays
   isDebugVisible = debugCheckbox.checked;
