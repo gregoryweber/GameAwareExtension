@@ -115,20 +115,24 @@ function syncBuffer(){
     // }
     // console.log(`sync point at ${actualKeyPointer}/${initialBuffer.length-1}:`)
     //ToDo: Deal with the case where there are no tweens
+
     console.log(initialBuffer[actualKeyPointer])
+    actualTweenPointer = 0;
     if (!initialBuffer[actualKeyPointer].tweens){
         console.log("Error: Tween object cannot be found");
         return;
-    }
-    actualTweenPointer = 0;
-    for( let i = 0; i < initialBuffer[actualKeyPointer].tweens.length-1; i++){
+    } else {
+      for( let i = 0; i < initialBuffer[actualKeyPointer].tweens.length-1; i++){
         // if(actualTime - initialBuffer[actualKeyPointer].tweens[i].game_time < (1/tween_rate * 1000)){
-        console.log(`tween difference: ${actualTime} - ${initialBuffer[actualKeyPointer].tweens[i+1].game_time} = ${actualTime - initialBuffer[actualKeyPointer].tweens[i+1].game_time} `)
+        // console.log(`tween difference: ${actualTime} - ${initialBuffer[actualKeyPointer].tweens[i+1].game_time} = ${actualTime - initialBuffer[actualKeyPointer].tweens[i+1].game_time} `)
         if(actualTime - initialBuffer[actualKeyPointer].tweens[i+1].game_time < -target){
             actualTweenPointer = i;
             break;
         }
+      }
     }
+
+    
     
     // if(!actualTweenPointer){
     //     console.log("Error: no tween pointer found");
@@ -705,18 +709,14 @@ var newDialog = "";
 function gameLoop(){
     nowTime = Date.now();
 
-    // if(keyFrameIndex < 0 || tweenIndex >= initialBuffer[keyFrameIndex].tweens.length-1){
     if(nowTime - lastKeyTime >= timeToNextKey && forwardBuffer[keyFrameIndex]){
         catchUpTime += nowTime-lastKeyTime-timeToNextKey;
-        // console.log("key frame: " + keyFrameIndex);
         let dateNow = Date.now();
         let actualTime = dateNow - start_clock_secs - start_game_secs - (broadcastLatency * 1000);
         timeDiff = actualTime - forwardBuffer[keyFrameIndex].game_time
-        console.log(`time difference: ${timeDiff}`);
         let range = 200;
         if (Math.abs(timeDiff-target) > range) {
             timeToNextKey -= timeDiff - target
-            console.log(`timeToNextKey: ${timeToNextKey}`)
         } else {
             timeToNextKey = 1000/key_rate
         }
@@ -727,27 +727,27 @@ function gameLoop(){
         updateDraw()
         lastKeyTime = nowTime;
         lastTweenTime = nowTime;
-        console.log(forwardBuffer[keyFrameIndex])
         if(forwardBuffer[keyFrameIndex]["key"]["visualNovelText"]){
             if(!(forwardBuffer[keyFrameIndex]["key"]["visualNovelText"]["dialogFull"] === newDialog)){
                 newDialog = forwardBuffer[keyFrameIndex]["key"]["visualNovelText"]["dialogFull"].toString();
                 if(!(dialogArray.includes(newDialog))){
                   dialogArray.push(newDialog);
+                 
                   if(isLiveDialog){
                     dialogArrayIndex = dialogArray.length -1;
                   }
-    
+                  dialogueNotification();
                 }    
             }
         }
-
         timeToNextTween = forwardBuffer[keyFrameIndex].tweens[0].game_time - forwardBuffer[keyFrameIndex].game_time - tweenOffset - catchUpTime;
-
+        
+        
         let syncRange = 500;
         if (forwardBuffer.length > 2 && Math.abs(timeDiff-target) >= syncRange){
             //TODO: Check for end frame
-            console.log("Syncing!")
-            syncBuffer();
+            // console.log("Syncing!")
+            //syncBuffer();
         }
         //console.log("index ", keyFrameIndex, ": ", forwardBuffer[keyFrameIndex]);
         keyFrameIndex++;        
@@ -758,9 +758,9 @@ function gameLoop(){
         //console.log(`${nowTime}-${lastTweenTime}-${Math.max(timeToNextTween, 0)}=${catchUpTime}`)
         
         //console.log(`${keyFrameIndex-1}[${tweenIndex}]: ${nowTime-lastTweenTime} >= ${timeToNextTween} (-${catchUpTime})`);
-        if (!updateWorldModelWithTween(forwardBuffer[keyFrameIndex-1].tweens[tweenIndex])) {
-            console.log(tweenIndex ,forwardBuffer[keyFrameIndex-1].tweens)
-        }
+        // if (!updateWorldModelWithTween(forwardBuffer[keyFrameIndex-1].tweens[tweenIndex])) {
+        //     console.log(tweenIndex ,forwardBuffer[keyFrameIndex-1].tweens)
+        // }
         
         // updateWorldModelWithTween(forwardBuffer[keyFrameIndex-1].tweens[tweenIndex]);
         lastTweenTime = nowTime;
@@ -872,6 +872,7 @@ function changeLanguage(){
 }
 
 var dialogArrayIndex = 0;
+let isLiveDialog = true;
 function advanceDialogArray(){
   isLiveDialog = false;
   document.getElementById("dialogCheckbox").checked = false;;
@@ -879,6 +880,9 @@ function advanceDialogArray(){
     if(dialogArrayIndex < dialogArray.length-1){
         dialogArrayIndex++;
         console.log(dialogArrayIndex);
+        if (dialogArrayIndex == dialogArray.length -1) {
+          dialogueNotification();
+        }
     }
 }
 
@@ -893,10 +897,18 @@ function previousDialogArray(){
     }
 }
 
-var isLiveDialog = true;
 function changeDialogSettings(){
   isLiveDialog = document.getElementById("dialogCheckbox").checked;
   if(isLiveDialog){
     dialogArrayIndex = dialogArray.length-1;
   }
+}
+
+function dialogueNotification(){
+  let nextButton = document.getElementById("next-dialog-button")
+    if(dialogArrayIndex == dialogArray.length-1){
+      nextButton.style.backgroundColor = '#FFFFFF';
+    } else {
+      nextButton.style.backgroundColor = '#FF0000';
+    }
 }
