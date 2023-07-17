@@ -95,8 +95,10 @@ function syncBuffer(){
     //broadcastLatency = number from Twitch, latency from the streamer to the viewer
     let dateNow = Date.now();
     let actualTime = dateNow - start_clock_secs - start_game_secs - (broadcastLatency * 1000);
-
-    
+    console.log('dateNow', dateNow)
+    console.log('start_clock_secs', start_clock_secs)
+    console.log('start_game_secs', start_game_secs)
+    console.log('actualTime', actualTime)
     // Search initial buffer, find key within 1/key_frame_rate of the calculated keyTime
     // Target key frame should be the same as key time if we ignore the hundreds values (only the thousands are the seconds);
     // console.log("pre-initialBuffer: ", initialBuffer);
@@ -120,12 +122,9 @@ function syncBuffer(){
     actualTweenPointer = 0;
     if (!initialBuffer[actualKeyPointer].tweens){
         console.log("Error: Tween object cannot be found");
-        return;
     } else {
       for( let i = 0; i < initialBuffer[actualKeyPointer].tweens.length-1; i++){
-        // if(actualTime - initialBuffer[actualKeyPointer].tweens[i].game_time < (1/tween_rate * 1000)){
-        // console.log(`tween difference: ${actualTime} - ${initialBuffer[actualKeyPointer].tweens[i+1].game_time} = ${actualTime - initialBuffer[actualKeyPointer].tweens[i+1].game_time} `)
-        if(actualTime - initialBuffer[actualKeyPointer].tweens[i+1].game_time < -target){
+       if(actualTime - initialBuffer[actualKeyPointer].tweens[i+1].game_time < -target){
             actualTweenPointer = i;
             break;
         }
@@ -145,20 +144,24 @@ function syncBuffer(){
     if (initialBuffer) {
         console.log(initialBuffer[0])
         lastKeyTime = Date.now() - (actualTime - initialBuffer[0].game_time);
-        lastTweenTime = Date.now() - (actualTime - initialBuffer[0].tweens[tweenIndex].game_time);
+        
         timeToNextKey = 1000/key_rate;
-        if(initialBuffer[0].tweens[tweenIndex+1]){
+        if(initialBuffer[0].tweens && initialBuffer[0].tweens[tweenIndex+1]){
             timeToNextTween = initialBuffer[0].tweens[tweenIndex+1].game_time - initialBuffer[0].tweens[tweenIndex].game_time - tweenOffset;
+            lastTweenTime = Date.now() - (actualTime - initialBuffer[0].tweens[tweenIndex].game_time);
         }
         else{
             timeToNextTween = Math.floor(1000/tween_rate);
+            lastTweenTime = lastKeyTime;
         }
     }
     
 
     updateWorldModelWithKey(initialBuffer[keyFrameIndex]);
-    //updateWorldModelWithTween(initialBuffer[keyFrameIndex].tweens[tweenIndex]);
-    updateWorldModelWithTween(initialBuffer[keyFrameIndex].tweens[tweenIndex]);
+    if (initialBuffer[keyFrameIndex].tweens) {
+      updateWorldModelWithTween(initialBuffer[keyFrameIndex].tweens[tweenIndex]);
+    }
+   
     updateDraw();
 }
 
@@ -721,9 +724,7 @@ function gameLoop(){
             timeToNextKey = 1000/key_rate
         }
         tweenIndex = 0;
-        //console.log(`key ${keyFrameIndex}`)
         updateWorldModelWithKey(forwardBuffer[keyFrameIndex]);
-        //updateWorldModelWithTween(forwardBuffer[keyFrameIndex].tweens[0]);
         updateDraw()
         lastKeyTime = nowTime;
         lastTweenTime = nowTime;
@@ -740,7 +741,13 @@ function gameLoop(){
                 }    
             }
         }
-        timeToNextTween = forwardBuffer[keyFrameIndex].tweens[0].game_time - forwardBuffer[keyFrameIndex].game_time - tweenOffset - catchUpTime;
+
+        if (forwardBuffer[keyFrameIndex] && forwardBuffer[keyFrameIndex].tweens) {
+          timeToNextTween = forwardBuffer[keyFrameIndex].tweens[0].game_time - forwardBuffer[keyFrameIndex].game_time - tweenOffset - catchUpTime;
+        } else {
+          timeToNextTween = Math.floor(1000/tween_rate);
+        }
+        
         
         
         let syncRange = 500;
@@ -749,23 +756,13 @@ function gameLoop(){
             // console.log("Syncing!")
             //syncBuffer();
         }
-        //console.log("index ", keyFrameIndex, ": ", forwardBuffer[keyFrameIndex]);
         keyFrameIndex++;        
     }
-    //console.log(`tween ${tweenIndex}: ${nowTime-lastTweenTime} >= ${timeToNextTween}`);
     if (nowTime - lastTweenTime >= timeToNextTween && forwardBuffer[keyFrameIndex-1] && tweenIndex < tween_rate){
         catchUpTime = nowTime-lastTweenTime-Math.max(timeToNextTween, 0);
-        //console.log(`${nowTime}-${lastTweenTime}-${Math.max(timeToNextTween, 0)}=${catchUpTime}`)
-        
-        //console.log(`${keyFrameIndex-1}[${tweenIndex}]: ${nowTime-lastTweenTime} >= ${timeToNextTween} (-${catchUpTime})`);
-        // if (!updateWorldModelWithTween(forwardBuffer[keyFrameIndex-1].tweens[tweenIndex])) {
-        //     console.log(tweenIndex ,forwardBuffer[keyFrameIndex-1].tweens)
-        // }
-        
-        // updateWorldModelWithTween(forwardBuffer[keyFrameIndex-1].tweens[tweenIndex]);
         lastTweenTime = nowTime;
         updateDraw();
-        if(forwardBuffer[keyFrameIndex-1].tweens[tweenIndex+1]){
+        if(forwardBuffer[keyFrameIndex-1] && forwardBuffer[keyFrameIndex-1].tweens && forwardBuffer[keyFrameIndex-1].tweens[tweenIndex+1]){
             timeToNextTween = forwardBuffer[keyFrameIndex-1].tweens[tweenIndex+1].game_time - forwardBuffer[keyFrameIndex-1].tweens[tweenIndex].game_time - tweenOffset - catchUpTime;
         }
         else{
@@ -774,7 +771,6 @@ function gameLoop(){
         timeToNextTween -= Date.now() - nowTime;
         tweenIndex++;
     }
-    // displayOverLayDebug();
     window.requestAnimationFrame(gameLoop);
     
 }
@@ -901,6 +897,7 @@ function changeDialogSettings(){
   isLiveDialog = document.getElementById("dialogCheckbox").checked;
   if(isLiveDialog){
     dialogArrayIndex = dialogArray.length-1;
+    dialogueNotification();
   }
 }
 
