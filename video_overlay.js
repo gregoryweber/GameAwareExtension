@@ -95,10 +95,6 @@ function syncBuffer(){
     //broadcastLatency = number from Twitch, latency from the streamer to the viewer
     let dateNow = Date.now();
     let actualTime = dateNow - start_clock_secs - start_game_secs - (broadcastLatency * 1000);
-    console.log('dateNow', dateNow)
-    console.log('start_clock_secs', start_clock_secs)
-    console.log('start_game_secs', start_game_secs)
-    console.log('actualTime', actualTime)
     // Search initial buffer, find key within 1/key_frame_rate of the calculated keyTime
     // Target key frame should be the same as key time if we ignore the hundreds values (only the thousands are the seconds);
     // console.log("pre-initialBuffer: ", initialBuffer);
@@ -909,3 +905,17 @@ function dialogueNotification(){
       nextButton.style.backgroundColor = '#FF0000';
     }
 }
+
+window.addEventListener('keydown', function (e) {
+  console.log(e.key)
+
+  function keyToFunction(key, func) {
+    if (e.key == key) {
+      func();
+    }
+  }
+  keyToFunction("-", decreaseFontSize) 
+  keyToFunction("=", increaseFontSize)
+  keyToFunction("ArrowLeft", previousDialogArray()) 
+  keyToFunction("ArrowRight", advanceDialogArray())
+}, false);
