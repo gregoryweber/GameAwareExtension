@@ -35,7 +35,7 @@ twitch.onAuthorized((auth) => {
 function getStartData(){
     $.ajax({
         type: 'GET',
-        url: location.protocol + '//localhost:3000/startData',
+        url: location.protocol + '//localhost:3000/startData', // For remote, replace localhost with https://cmuctpawsec2.com:3000/startData
         contentType: 'application/json',
         headers: { authorization: 'Bearer ' + window.Twitch.ext.viewer.sessionToken},
         success: function(res) {
@@ -54,7 +54,7 @@ function setUpInitialBuffer(){
     let backPadding = parseInt(broadcastLatency)*(2/key_rate); // pad an extra few seconds
     $.ajax({
         type: 'GET',
-        url: location.protocol + '//localhost:3000/initialBuffer?padding='+backPadding,
+        url: location.protocol + '//localhost:3000/initialBuffer?padding='+backPadding, // For remote, replace localhost with https://cmuctpawsec2.com:3000/initialBuffer?padding=
         async:true,
         contentType: 'application/json',
         headers: { authorization: 'Bearer ' + window.Twitch.ext.viewer.sessionToken},
@@ -71,8 +71,7 @@ function setUpInitialBuffer(){
 function getLatestData(){
       $.ajax({
           type: 'GET',
-          url: location.protocol + '//localhost:3000/latestData',
-          contentType: 'application/json',
+          url: location.protocol + '//localhost:3000/latestData', // For remote, replace localhost with https://cmuctpawsec2.com:3000/latestData
           headers: { authorization: 'Bearer ' + window.Twitch.ext.viewer.sessionToken},
           success: function(res) {        
             forwardBuffer.push(res);
