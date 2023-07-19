@@ -1,22 +1,18 @@
-import {updateSvg, startSvg} from './update_svg.js';
+import {startSvg, updateSvg} from './update_svg.js';
 
-var token, userId;
 
 // so we don't have to write this out everytime 
 const twitch = window.Twitch.ext;
 
-let isAuthed = false;
 let broadcastLatency;
 let start_game_secs;
 let start_clock_secs;
-let latest_game_secs;
 let tween_rate = 24;
 let key_rate = 1;
 let target = 200;
 let screen_width;
 let screen_height;
 let initialBuffer = [];
-let currentFramePointer;
 // callback called when context of an extension is fired 
 twitch.onContext((context) => {
   broadcastLatency = context.hlsLatencyBroadcaster;
@@ -134,20 +130,12 @@ function syncBuffer(){
     updateSvg(worldModel, screen_width, screen_height);
 }
 
-// TODO: Be more consistent with var/let use
-var frameIndex;
-var thenTime;
-
 var lastKeyTime;
 var lastTweenTime;
 var keyFrameIndex;
 var tweenIndex;
 var timeToNextKey;
 var timeToNextTween;
-
-var parentSvg;
-var svgElements;
-var textSvg;
 
 function updateWorldModelWithKey(keyFrame){
     if (!keyFrame) {
@@ -181,6 +169,7 @@ function updateWorldModelWithTween(tweenFrame){
 function startGameLoop(){
     startSvg();
 
+
     lastKeyTime = 0;
     lastTweenTime = 0;
     keyFrameIndex = -1;
@@ -192,12 +181,6 @@ function startGameLoop(){
 
 }
 
-function displayOverLayDebug(){
-    var string = "game time: " + worldModel["game_time"]+ "\n keyFrameIndex: " + keyFrameIndex + "/" + initialBuffer.length + " \n timeToNextKey: "+  timeToNextKey + "\n timeToNextTween:" + timeToNextTween+" \n Now time:" + nowTime + "\n broadcast latency: " + broadcastLatency;
-    textSvg.textContent = string;
-}
-
-var counter = 0;
 var nowTime;
 var tweenOffset = 0;
 var catchUpTime = 0;
@@ -261,16 +244,6 @@ function gameLoop(){
         }
         tweenIndex++;
     }
-    // displayOverLayDebug();
     window.requestAnimationFrame(gameLoop);
     
-}
-
-function incrementTweenOffset() {
-    tweenOffset++; // increment tweenOffset by 1
-    document.getElementById("tween-offset").innerHTML = tweenOffset; // update the value displayed on the web page
-}
-function decrementTweenOffset() {
-    tweenOffset--; // decrement tweenOffset by 1
-    document.getElementById("tween-offset").innerHTML = tweenOffset; // update the value displayed on the web page
 }

@@ -14,13 +14,18 @@
     <!-- If you use any external libraries, such as jQuery, you must include
       them as part of your extension.  Twitch does not allow extensions to link
       to external libraries. -->
-      <svg id = "parent_svg" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;">
-        <text id="debugging" x = "10" y ="20"></text>
+      <svg id = "parent_svg_maze" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;">
       </svg>
-      <!-- <div class="container">
-        <h3>Tween Offset: <span id="tween-offset">0</span></h3>
-        <button id = "plus" onclick="incrementTweenOffset()">+</button>
-        <button id = "minus" onclick="decrementTweenOffset()">-</button>
-      </div> -->
+      <svg id = "parent_svg_debug" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;">
+      </svg>
+      <div class="extension-options">
+        <label>
+          <input type="checkbox" name="overlay" value="debug" id="debugCheckbox"> Debug Overlay
+        </label>
+        <label>
+          <input type="checkbox" name="overlay" value="maze" id="mazeCheckbox"> Maze Overlay
+        </label>
+      </div>
+      
     </body>
 </html>
