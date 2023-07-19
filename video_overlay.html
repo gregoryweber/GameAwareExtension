@@ -14,9 +14,14 @@
     <!-- If you use any external libraries, such as jQuery, you must include
       them as part of your extension.  Twitch does not allow extensions to link
       to external libraries. -->
+      <svg id = "parent_svg_debug" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;">
+      </svg>
       <svg id = "parent_svg_maze" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;">
       </svg>
-      <svg id = "parent_svg_debug" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;">
+      <svg id = "parent_svg_tower_defense" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;">
+      </svg>
+      <svg id="upcoming_enemy_container" style="position: absolute; top: 12%; right: 0; width: 20%; height: 65%;">
+        <rect id="upcoming_enemy_rect" x="0" y="0" width="100%" height="100%" fill="rgb(40,40,40)" stroke="darkgray" stroke-width="5"></rect>
       </svg>
       <div class="extension-options">
         <label>
@@ -24,6 +29,9 @@
         </label>
         <label>
           <input type="checkbox" name="overlay" value="maze" id="mazeCheckbox"> Maze Overlay
+        </label>
+        <label>
+          <input type="checkbox" name="overlay" value="tower_defense" id="towerDefenseCheckbox"> Tower Defense Overlay
         </label>
       </div>
       

@@ -1,27 +1,41 @@
 var parentSvgDebug;
 var parentSvgMaze;
+var parentSvgTowerDefense;
 var svgDebugElements;
 var svgMazeElements;
+var svgTowerDefenseElements;
+
 var isDebugVisible = false;
 var isMazeVisible = false;
+var isTowerDefenseVisible = false;
+var currentEnemyArray = [];
+
 function startSvg() {
     parentSvgDebug = document.getElementById("parent_svg_debug");
     parentSvgMaze = document.getElementById("parent_svg_maze");
+    parentSvgTowerDefense = document.getElementById("parent_svg_tower_defense");
     document.getElementById("debugCheckbox").addEventListener("change", changeOverlay);
     document.getElementById("mazeCheckbox").addEventListener("change", changeOverlay);
+    document.getElementById("towerDefenseCheckbox").addEventListener("change", changeOverlay);
 
 
     svgDebugElements = {};
     svgMazeElements = {};
+    svgTowerDefenseElements = {};
+
 }
 
 function changeOverlay(){
     const debugCheckbox = document.querySelector('input[value="debug"]');
     const mazeCheckbox = document.querySelector('input[value="maze"]');
+    const towerDefenseCheckbox = document.querySelector('input[value="tower_defense"]');
+
   
     // Toggle the visibility of all the selected overlays
     isDebugVisible = debugCheckbox.checked;
     isMazeVisible = mazeCheckbox.checked;  
+    isTowerDefenseVisible = towerDefenseCheckbox.checked;  
+
 }
 
 
@@ -39,6 +53,15 @@ function updateSvg(worldModel, screen_width, screen_height){
     }
     else{
         document.getElementById("parent_svg_maze").style.visibility = "hidden";
+    }
+    if(isTowerDefenseVisible){
+        document.getElementById("parent_svg_tower_defense").style.visibility = "visible";
+        document.getElementById("upcoming_enemy_container").style.visibility = "visible";
+        updateSVGTowerDefenseElements(worldModel, screen_width, screen_height);
+    }
+    else{
+        document.getElementById("parent_svg_tower_defense").style.visibility = "hidden";
+        document.getElementById("upcoming_enemy_container").style.visibility = "hidden";
     }
 }
 
@@ -349,5 +372,353 @@ function updateSvgMaze(worldModel, screen_width, screen_height){
 });
     
 }
+function updateSVGTowerDefenseElements(worldModel, screen_width, screen_height){
+    let xOffset = 0;
+    let yOffset = 0;
+    let width = 0;
+    let height = 0;  
+    let tooltipInfo;
+    var upcomingEnemiesContainer = document.getElementById("upcoming_enemy_container");
+    var upcomingEnemiesRect = document.getElementById("upcoming_enemy_rect");
+    // Create a new text element and set its content to enemyInfo
+    // Select all elements with class "enemy-info" inside the container
+    var deleteTexts = upcomingEnemiesContainer.querySelectorAll(".enemy-info");
 
+    // Loop through all text elements and remove them
+    for (let j = 0; j < deleteTexts.length; j++) {
+      deleteTexts[j].remove();
+    }
+    var rectBox = upcomingEnemiesRect.getBBox();
+    var startY = rectBox.y + 20;
+    for(let i = 0; i < currentEnemyArray.length; i++){
+      var enemyInfo = buildEnemyInformation(currentEnemyArray[i]);
+      var textElementEnemy = document.createElementNS("http://www.w3.org/2000/svg", "text");
+      // Set the attributes of the text element
+      textElementEnemy.setAttribute("id", enemyInfo.Name);
+      textElementEnemy.setAttribute("width", "50");
+      textElementEnemy.setAttribute("height", "50");
+      textElementEnemy.setAttribute("fill", "whitesmoke");
+      textElementEnemy.setAttribute("background-color", "#000000");
+      textElementEnemy.setAttribute("font-size", "14px");
+      textElementEnemy.setAttribute("class", "enemy-info");
+      textElementEnemy.textContent = "";
+                  // Get the bounding box of the rectangle
+
+      // Set the position of the text elements
+      textElementEnemy.setAttribute("x", rectBox.x + 50); // 10px padding from left edge of rectangle
+      textElementEnemy.setAttribute("y", startY); // 20px padding from top edge of rectangle
+
+      Object.keys(enemyInfo).forEach(function(key, index) {
+        var tspan = document.createElementNS("http://www.w3.org/2000/svg", "tspan");
+        tspan.setAttribute("x", 9);
+        tspan.setAttribute("dy", "1.4em"); // Line spacing
+        if(!(key.includes("Name"))){
+          tspan.textContent = key + ": " + enemyInfo[key];
+        }
+        else{
+          tspan.textContent = enemyInfo[key];
+        }
+        textElementEnemy.appendChild(tspan);
+        startY +=20;
+      });
+
+      // Append the text element to the upcomingEnemiesContainer
+      upcomingEnemiesContainer.appendChild(textElementEnemy);
+
+    }
+    var gElement = document.getElementById("tooltip-tower-svg");
+    if(!gElement){
+        gElement = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    
+        // Set the attributes of the g element
+        gElement.setAttribute("id", "tooltip-tower-svg");
+        gElement.setAttribute("visibility", "hidden");
+
+        var textElement = document.createElementNS("http://www.w3.org/2000/svg", "text");
+
+        // Set the attributes of the text element
+        textElement.setAttribute("id", "tooltip-tower-text");
+        // textElement.setAttribute("x",5);
+        // textElement.setAttribute("y",5);
+        textElement.setAttribute("width", "18%");
+        textElement.setAttribute("height", "18%");
+        textElement.setAttribute("fill", "whitesmoke");
+        textElement.setAttribute("background-color", "#000000");
+        textElement.setAttribute("font-size", "14px");
+         
+        // Create a <rect> element to serve as the background of the tooltip
+         var rectElement = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+         rectElement.setAttribute("fill", "rgb(40,40,40)");
+         rectElement.setAttribute("stroke", "darkgrey");
+         rectElement.setAttribute("stroke-width", "10px");
+         rectElement.setAttribute("rx", 5);
+         rectElement.setAttribute("width", "20%");
+         rectElement.setAttribute("height", "25%");
+         rectElement.setAttribute("ry", 200);
+         rectElement.setAttribute("id", "tooltip-tower-rect");
+
+        gElement.appendChild(rectElement);
+        gElement.appendChild(textElement);
+        parentSvgTowerDefense.appendChild(gElement);
+    }
+    console.log(worldModel);
+    Object.entries(worldModel["key"]).forEach(([key, value]) => {
+      if (key.includes("WaveManager")){
+        for (let i = 0; i < value.currentWave.enemies.length; i++) {
+          let enemy = value.currentWave.enemies[i];
+          if(!currentEnemyArray.includes(enemy.enemyType)){
+            currentEnemyArray.push(enemy.enemyType);
+          }
+        }
+      }
+      if (key != null && value["screenRect"] != null) {
+        xOffset = value["screenRect"].x/screen_width*100;
+        yOffset = value["screenRect"].y/screen_height*100;
+        width = value["screenRect"].w/screen_width*100;
+        height = value["screenRect"].h/screen_height*100;
+        var tooltipData;
+        var svgRect = svgTowerDefenseElements[key];
+        if (svgRect) {
+            svgRect.setAttribute("width", width.toString()+"%");
+            svgRect.setAttribute("height", height.toString()+"%");
+            svgRect.setAttribute("x", xOffset.toString()+"%");
+            svgRect.setAttribute("y", yOffset.toString()+"%");
+            if(value["stats"]){
+              gElement.setAttribute("class", "tooltip");
+              tooltipData = buildTooltip(key, value)
+              if(!textElement){
+                textElement =  document.getElementById("tooltip-tower-text");
+              }
+              textElement.textContent = "";
+              
+              Object.keys(tooltipData).forEach(function(key, index) {
+                var tspan = document.createElementNS("http://www.w3.org/2000/svg", "tspan");
+                tspan.setAttribute("x", 10);
+                tspan.setAttribute("dy", "1.4em"); // Line spacing
+                if(!(key.includes("Name"))){
+                  tspan.textContent = key + ": " + tooltipData[key];
+                }
+                else{
+                  tspan.textContent = tooltipData[key];
+                }
+                textElement.appendChild(tspan);
+              });
+            }
+        }
+        else{
+            svgRect = document.createElementNS(
+                "http://www.w3.org/2000/svg",
+                "rect"
+            );
+            svgRect.setAttribute("id", key + "-tower");
+            svgRect.setAttribute("width", width.toString()+"%");
+            svgRect.setAttribute("height", height.toString()+"%");
+            svgRect.setAttribute("x", xOffset.toString()+"%");
+            svgRect.setAttribute("y", yOffset.toString()+"%");
+            svgRect.setAttribute("fill", "none");
+            // svgRect.setAttribute("stroke", "blue");
+            // svgRect.setAttribute("stroke-width", "2");
+            svgRect.setAttribute("position", "absolute");
+            if(value["stats"]){
+              tooltipData = buildTooltip(key, value);
+              svgRect.style.pointerEvents = "all"; // prevent stroke from triggering mouse events
+              svgRect.addEventListener("mousemove", (evt) => {                  
+                  var towerX = parseFloat(svgRect.getAttribute("x")) + parseFloat(svgRect.getAttribute("width"))/2;
+                  var towerY = parseFloat(svgRect.getAttribute("y")) + parseFloat(svgRect.getAttribute("height"))/2;
+                  // console.log(value);
+    
+                  var anchorTower = document.getElementById("tooltip-tower-circle");
+                  if(!anchorTower){
+                    anchorTower =  createPointTowerDefense(towerX, towerY, 5, "black", "tooltip-tower");
+                    anchorTower.setAttribute("visibility", "hidden");
+                    anchorTower.pointerEvents = "none";
+                  }
+                  else{
+                    updatePoint(anchorTower, towerX, towerY);
+                  }
+                  var anchorTooltip = document.getElementById("tooltip-anchor-circle");
+                  if(!anchorTooltip){
+                    anchorTooltip = createPointTowerDefense(towerX, towerY - 30, 5, "darkgrey", "tooltip-anchor");
+                  }
+                  else{
+                    updatePoint(anchorTooltip, towerX, towerY - 8);
+                  }                 
+                  var anchorLine = document.getElementById("tooltip-anchor-line");
+                  if(!anchorLine){
+                    anchorLine = createLineTowerDefense(towerX, towerY, towerX, towerY-8, "darkgrey", "tooltip-anchor");
+                    anchorLine.setAttribute("stroke-width", "4");
+                  }
+                  else{
+                    updateLine(anchorLine, towerX, towerY, towerX, towerY-8);
+                  }
+                
+                  gElement.setAttribute("class", "tooltip");
+                  
+                  if(!textElement){
+                    textElement =  document.getElementById("tooltip-tower-text");
+                  }
+                  textElement.textContent = "";
+                  
+                  Object.keys(tooltipData).forEach(function(key, index) {
+                    var tspan = document.createElementNS("http://www.w3.org/2000/svg", "tspan");
+                    tspan.setAttribute("x", 10);
+                    tspan.setAttribute("dy", "1.4em"); // Line spacing
+                    if(!(key.includes("Name"))){
+                      tspan.textContent = key + ": " + tooltipData[key];
+                    }
+                    else{
+                      tspan.textContent = tooltipData[key];
+                    }
+                    textElement.appendChild(tspan);
+                  });
+                  
+                  // Set the attributes of the rect element
+                  var toolTipBox = gElement.getBBox();
+                  var anchorBBox = anchorTooltip.getBBox();
+                  if(!rectElement){
+                    rectElement = document.getElementById("tooltip-tower-rect");
+                  }
+                  // rectElement.setAttribute("width", bbox.width + 20);
+                  // rectElement.setAttribute("height", bbox.height + 10);
+                  // rectElement.setAttribute("x", bbox.x-10);
+                  // rectElement.setAttribute("y", bbox.y);
+                  // towerX -= bbox.width/2;
+                  // towerY -= bbox.height;
+
+
+                  gElement.setAttribute("x", anchorBBox.x - toolTipBox.width / 2);
+                  gElement.setAttribute("y", anchorBBox.y - toolTipBox.height);
+                  if(isTowerDefenseVisible){
+                    gElement.setAttribute("visibility", "visible");
+                    anchorTower.setAttribute("visibility", "visible");
+                    anchorTooltip.setAttribute("visibility", "visible");
+                    anchorLine.setAttribute("visibility", "visible");
+                  }
+                  else{
+                    gElement.setAttribute("visibility", "hidden");
+                    anchorTower.setAttribute("visibility", "hidden");
+                    anchorTooltip.setAttribute("visibility", "hidden");
+                    anchorLine.setAttribute("visibility", "hidden");
+                  }
+              });            
+              svgRect.addEventListener("mouseout", () => {
+                  gElement.setAttribute("visibility", "hidden");
+                  document.getElementById("tooltip-tower-circle").setAttribute("visibility", "hidden");
+                  document.getElementById("tooltip-anchor-circle").setAttribute("visibility", "hidden");
+                  document.getElementById("tooltip-anchor-line").setAttribute("visibility", "hidden");
+                  // console.log("mouse out");
+              });
+            }    
+            parentSvgTowerDefense.appendChild(svgRect);
+            svgTowerDefenseElements[key] = svgRect;
+        }
+      }
+    });
+    //First thing to do: if an item is in the svgElements list and is no longer in the worldModel. remove it
+    Object.entries(svgTowerDefenseElements).forEach(([key, value]) => {
+        if (!(key in worldModel["key"])) {
+            if (parentSvgTowerDefense.contains(value)) {
+              parentSvgTowerDefense.removeChild(value);
+            }
+            delete svgTowerDefenseElements[key];
+        }
+    });
+}
+
+function buildEnemyInformation(enemy){
+  var enemyName;
+  var enemyDamage;
+  var enemyHealth;
+  switch(enemy){
+    case "Hoverbuggy":
+      enemyName = "Hover Buggy";
+      enemyDamage = 2;
+      enemyHealth = 5;
+      break;
+    case "Hovercopter":
+      enemyName = "Hover Tank";
+      enemyDamage = 6;
+      enemyHealth = 10;
+      break;
+    case "Hovertank":
+      enemyName = "Hover Tank";
+      enemyDamage = 7;
+      enemyHealth = 15;
+      break;
+    case "Hoverboss":
+      enemyName = "Hover Boss";
+      enemyDamage = 9;
+      enemyHealth = 20;
+      break;
+    default:
+      enemyName = "Hover Buggy";
+      enemyDamage = 2;
+      enemyHealth = 5;
+      break;
+  }
+  var reConstructedObject = {"Name": enemyName, "Damage": enemyDamage, "Health": enemyHealth};
+  return reConstructedObject;
+}
+
+function buildTooltip(key, data){
+  var towerName;
+  var towerDps;
+  var towerHealth;
+  var towerFireRate;
+  var level;
+  // switch(data.stats.cost){
+  //   case 4:
+  //     towerName = "Assault Cannon - Level" + data.stats.level;
+  //     break;
+  //   case 12:
+  //     towerName = "Rocket Platform - Level" + data.stats.level;
+  //     break;
+  //   case 15:
+  //     towerName = "Plasma Lance - Level" + data.stats.level;
+  //     break;
+  //   default:
+  //     towerName = key.toString() + " - Level" + data.stats.level;
+  // }
+  towerName = data.type
+  level = data.stats.level
+  towerDps = data.stats.dps;
+  towerFireRate = data.stats["effectDetails"][0].fireRate;
+  towerHealth = data["currentHealth"].toString() + "/" + data.stats.startingHealth.toString();
+  
+  var reConstructedObject = {"Name": towerName, "DPS": towerDps, "Fire Rate": towerFireRate, "Health": towerHealth, "Level": level};
+  // console.log(reConstructedObject);
+  return reConstructedObject;
+}
+function createPointTowerDefense(x,y,radius,color,key){
+    var svgPoint = document.createElementNS(
+        "http://www.w3.org/2000/svg",
+        "circle"
+    );
+    svgPoint.setAttribute("id", key + "-circle");
+    svgPoint.setAttribute("r", radius.toString());
+    svgPoint.setAttribute("cx", x.toString()+"%");
+    svgPoint.setAttribute("cy", y.toString()+"%");
+    svgPoint.setAttribute("position", "absolute");
+    svgPoint.setAttribute("fill", color.toString());
+    parentSvgTowerDefense.appendChild(svgPoint);
+  
+    return svgPoint;
+}
+function createLineTowerDefense(x1,y1,x2,y2,color,key){
+    var svgLine = document.createElementNS(
+        "http://www.w3.org/2000/svg",
+        "line"
+    );
+    svgLine.setAttribute("id", key + "-line");
+    svgLine.setAttribute("x1", x1.toString()+"%");
+    svgLine.setAttribute("y1", y1.toString()+"%");
+    svgLine.setAttribute("x2", x2.toString()+"%");
+    svgLine.setAttribute("y2", y2.toString()+"%");
+    svgLine.setAttribute("position", "absolute");
+    svgLine.setAttribute("stroke", color.toString());
+    svgLine.setAttribute("stroke-width", "2");
+    parentSvgTowerDefense.appendChild(svgLine);
+  
+    return svgLine;
+}
 export { startSvg, updateSvg};
