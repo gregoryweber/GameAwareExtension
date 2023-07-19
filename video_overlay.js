@@ -1,7 +1,6 @@
 import {startSvg, updateSvg} from './update_svg.js';
 
 
-// so we don't have to write this out everytime 
 const twitch = window.Twitch.ext;
 
 let broadcastLatency;
@@ -9,11 +8,11 @@ let start_game_secs;
 let start_clock_secs;
 let tween_rate = 24;
 let key_rate = 1;
-let target = 200;
+let target = 50;
 let screen_width;
 let screen_height;
 let initialBuffer = [];
-// callback called when context of an extension is fired 
+
 twitch.onContext((context) => {
   broadcastLatency = context.hlsLatencyBroadcaster;
 });
@@ -125,7 +124,6 @@ function syncBuffer(){
     
 
     updateWorldModelWithKey(initialBuffer[keyFrameIndex]);
-    //updateWorldModelWithTween(initialBuffer[keyFrameIndex].tweens[tweenIndex]);
     updateWorldModelWithTween(initialBuffer[keyFrameIndex].tweens[tweenIndex]);
     updateSvg(worldModel, screen_width, screen_height);
 }
@@ -189,7 +187,6 @@ var timeDiff = 0;
 function gameLoop(){
     nowTime = Date.now();
 
-    // if(keyFrameIndex < 0 || tweenIndex >= initialBuffer[keyFrameIndex].tweens.length-1){
     if(nowTime - lastKeyTime >= timeToNextKey && forwardBuffer[keyFrameIndex]){
         catchUpTime += nowTime-lastKeyTime-timeToNextKey;
         // console.log("key frame: " + keyFrameIndex);
@@ -207,7 +204,6 @@ function gameLoop(){
         tweenIndex = 0;
         //console.log(`key ${keyFrameIndex}`)
         updateWorldModelWithKey(forwardBuffer[keyFrameIndex]);
-        //updateWorldModelWithTween(forwardBuffer[keyFrameIndex].tweens[0]);
         updateSvg(worldModel, screen_width, screen_height);;
         lastKeyTime = nowTime;
         lastTweenTime = nowTime;
