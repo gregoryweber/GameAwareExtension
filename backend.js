@@ -63,7 +63,7 @@ app.get("/initialBuffer", async(req, res) =>{
 
 // REDIS STUFF
 const redisPass = "cmuludolab";
-const redisURI = "18.117.114.109";
+const redisURI = "3.130.126.51";
 const redisPort = 6379;
 let isRedisConnected = false;
 var client;

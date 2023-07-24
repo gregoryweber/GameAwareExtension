@@ -14,12 +14,22 @@
     <!-- If you use any external libraries, such as jQuery, you must include
       them as part of your extension.  Twitch does not allow extensions to link
       to external libraries. -->
-      <svg id = "parent_svg_maze" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;">
+      <svg id = "parent_svg_maze">
       </svg>
-      <svg id = "parent_svg_debug" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;">
+      <svg id = "parent_svg_debug">
       </svg>
-      <svg id = "parent_svg_bloomwood" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;">
-        <svg id = "dialog_container" style="position: absolute;">
+      <svg id = "parent_svg_bloomwood">
+        <svg id = "dialog_container">
+        </svg>
+      </svg>
+      <svg id = "dialog_choices_container">
+        <svg id="choice1_container">
+
+        </svg>
+      </svg>
+      <svg id = "dialog_choices_container2">
+        <svg id="choice2_container">
+
         </svg>
       </svg>
       <div id = "dialog_browser_container">
@@ -74,7 +84,8 @@
         <div>
           <label>
             <input id ="dialogCheckbox" type="checkbox" checked="true" name="dialog" value="live" onchange="changeDialogSettings()"> Enabled Live Dialogue
-          </label>        </div>
+          </label>        
+        </div>
       </div>
     </body>
 </html>
