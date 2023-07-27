@@ -85,7 +85,7 @@ app.get("/initialBuffer", async(req, res) =>{
 
 // REDIS STUFF
 const redisPass = "cmuludolab";
-const redisURI = "18.216.179.230"; // replace with correct IP from AWS server
+const redisURI = "3.130.126.51"; // replace with correct IP from AWS server
 const redisPort = 6379;
 let isRedisConnected = false;
 var client;
