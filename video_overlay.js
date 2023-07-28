@@ -111,17 +111,17 @@ function syncBuffer(){
     keyFrameIndex = 0;
 
     if (initialBuffer) {
-        lastKeyTime = Date.now() - (actualTime - initialBuffer[0].game_time);
-        // timeToNextKey = 1000/key_rate;
+        // lastKeyTime = Date.now() - (actualTime - initialBuffer[0].game_time);
+        timeToNextKey = 1000/key_rate;
 
         
         
         if(initialBuffer[0].tweens && initialBuffer[0].tweens[tweenIndex+1]){
-            // timeToNextTween = initialBuffer[0].tweens[tweenIndex+1].game_time - initialBuffer[0].tweens[tweenIndex].game_time - tweenOffset;
+            timeToNextTween = initialBuffer[0].tweens[tweenIndex+1].game_time - initialBuffer[0].tweens[tweenIndex].game_time - tweenOffset;
             lastTweenTime = Date.now() - (actualTime - initialBuffer[0].tweens[tweenIndex].game_time);
         }
         else{
-            // timeToNextTween = Math.floor(1000/tween_rate);
+            timeToNextTween = Math.floor(1000/tween_rate);
             lastTweenTime = lastKeyTime;
         }
     }
@@ -194,13 +194,15 @@ function gameLoop(){
     nowTime = Date.now();
 
     if(nowTime - lastKeyTime >= timeToNextKey && forwardBuffer[keyFrameIndex]){
+        console.log(forwardBuffer[keyFrameIndex])
         catchUpTime += nowTime-lastKeyTime-timeToNextKey;
-        // console.log("key frame: " + keyFrameIndex);
+
         let dateNow = Date.now();
         let actualTime = dateNow - start_clock_secs - start_game_secs - (broadcastLatency * 1000);
+        console.log(`dateNow: ${dateNow}, start_clock_secs: ${start_clock_secs}, start_game_secs: ${start_game_secs}, broadcastLatency: ${broadcastLatency}, game_time: ${forwardBuffer[keyFrameIndex].game_time}`)
         timeDiff = actualTime - forwardBuffer[keyFrameIndex].game_time
-        console.log(`time difference: ${timeDiff}`);
-        // console.log(`tween difference: ${actualTime} - ${initialBuffer[actualKeyPointer].tweens[i+1].game_time} = ${actualTime - initialBuffer[actualKeyPointer].tweens[i+1].game_time} `)
+        console.log(`time difference [${keyFrameIndex}/${forwardBuffer.length-1}]: ${timeDiff}`);
+      
         let range = 200;
         if (Math.abs(timeDiff-target) > range) {
             timeToNextKey -= timeDiff - target
@@ -209,9 +211,9 @@ function gameLoop(){
             timeToNextKey = 1000/key_rate
         }
         tweenIndex = 0;
-        //console.log(`key ${keyFrameIndex}`)
+
         updateWorldModelWithKey(forwardBuffer[keyFrameIndex]);
-        updateSvg(worldModel, screen_width, screen_height);;
+        updateSvg(worldModel, screen_width, screen_height);
         lastKeyTime = nowTime;
         lastTweenTime = nowTime;
         
@@ -223,8 +225,8 @@ function gameLoop(){
         let syncRange = 500;
         if (forwardBuffer.length > 2 && Math.abs(timeDiff-target) >= syncRange){
             //TODO: Check for end frame
-            console.log("Syncing!")
-            syncBuffer();
+            // console.log("Syncing!")
+            // syncBuffer();
         }
         //console.log("index ", keyFrameIndex, ": ", forwardBuffer[keyFrameIndex]);
         keyFrameIndex++;        
@@ -232,11 +234,8 @@ function gameLoop(){
     //console.log(`tween ${tweenIndex}: ${nowTime-lastTweenTime} >= ${timeToNextTween}`);
     if (nowTime - lastTweenTime >= timeToNextTween && forwardBuffer[keyFrameIndex-1] && forwardBuffer[keyFrameIndex-1].tweens && tweenIndex < tween_rate){
         catchUpTime = nowTime-lastTweenTime-Math.max(timeToNextTween, 0);
-        //console.log(`${nowTime}-${lastTweenTime}-${Math.max(timeToNextTween, 0)}=${catchUpTime}`)
-        
-        //console.log(`${keyFrameIndex-1}[${tweenIndex}]: ${nowTime-lastTweenTime} >= ${timeToNextTween} (-${catchUpTime})`);
-        
-        // updateWorldModelWithTween(forwardBuffer[keyFrameIndex-1].tweens[tweenIndex]);
+
+        updateWorldModelWithTween(forwardBuffer[keyFrameIndex-1].tweens[tweenIndex]);
         lastTweenTime = nowTime;
         updateSvg(worldModel, screen_width, screen_height);
         if(forwardBuffer[keyFrameIndex-1].tweens[tweenIndex+1]){

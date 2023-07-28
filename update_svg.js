@@ -666,33 +666,22 @@ function buildEnemyInformation(enemy){
 }
 
 function buildTooltip(key, data){
-  var towerName;
-  var towerDps;
-  var towerHealth;
-  var towerFireRate;
-  var level;
-  // switch(data.stats.cost){
-  //   case 4:
-  //     towerName = "Assault Cannon - Level" + data.stats.level;
-  //     break;
-  //   case 12:
-  //     towerName = "Rocket Platform - Level" + data.stats.level;
-  //     break;
-  //   case 15:
-  //     towerName = "Plasma Lance - Level" + data.stats.level;
-  //     break;
-  //   default:
-  //     towerName = key.toString() + " - Level" + data.stats.level;
-  // }
+  let towerName;
+  let towerDps;
+  let towerHealth;
+  let towerFireRate;
+  let level;
+
   towerName = data.type
   level = data.stats.level
   towerDps = data.stats.dps;
   towerFireRate = data.stats["effectDetails"][0].fireRate;
   towerHealth = data["currentHealth"].toString() + "/" + data.stats.startingHealth.toString();
   
-  var reConstructedObject = {"Name": towerName, "DPS": towerDps, "Fire Rate": towerFireRate, "Health": towerHealth, "Level": level};
-  // console.log(reConstructedObject);
-  return reConstructedObject;
+  let reConstructedObject = {"Name": towerName, "DPS": towerDps, "Fire Rate": towerFireRate, "Health": towerHealth, "Level": level};
+
+  return structuredClone(reConstructedObject);
+  
 }
 function createPointTowerDefense(x,y,radius,color,key){
     var svgPoint = document.createElementNS(
