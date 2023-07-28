@@ -111,7 +111,6 @@ function syncBuffer(){
     keyFrameIndex = 0;
 
     if (initialBuffer) {
-        console.log(initialBuffer[0])
         lastKeyTime = Date.now() - (actualTime - initialBuffer[0].game_time);
         // timeToNextKey = 1000/key_rate;
 
@@ -201,6 +200,7 @@ function gameLoop(){
         let actualTime = dateNow - start_clock_secs - start_game_secs - (broadcastLatency * 1000);
         timeDiff = actualTime - forwardBuffer[keyFrameIndex].game_time
         console.log(`time difference: ${timeDiff}`);
+        // console.log(`tween difference: ${actualTime} - ${initialBuffer[actualKeyPointer].tweens[i+1].game_time} = ${actualTime - initialBuffer[actualKeyPointer].tweens[i+1].game_time} `)
         let range = 200;
         if (Math.abs(timeDiff-target) > range) {
             timeToNextKey -= timeDiff - target
@@ -235,9 +235,6 @@ function gameLoop(){
         //console.log(`${nowTime}-${lastTweenTime}-${Math.max(timeToNextTween, 0)}=${catchUpTime}`)
         
         //console.log(`${keyFrameIndex-1}[${tweenIndex}]: ${nowTime-lastTweenTime} >= ${timeToNextTween} (-${catchUpTime})`);
-        if (!updateWorldModelWithTween(forwardBuffer[keyFrameIndex-1].tweens[tweenIndex])) {
-            console.log(tweenIndex ,forwardBuffer[keyFrameIndex-1].tweens)
-        }
         
         // updateWorldModelWithTween(forwardBuffer[keyFrameIndex-1].tweens[tweenIndex]);
         lastTweenTime = nowTime;

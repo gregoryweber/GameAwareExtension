@@ -382,14 +382,11 @@ function updateSVGTowerDefenseElements(worldModel, screen_width, screen_height){
     var upcomingEnemiesRect = document.getElementById("upcoming_enemy_rect");
     // Create a new text element and set its content to enemyInfo
     // Select all elements with class "enemy-info" inside the container
-    var deleteTexts = upcomingEnemiesContainer.querySelectorAll(".enemy-info");
-
-    // Loop through all text elements and remove them
-    for (let j = 0; j < deleteTexts.length; j++) {
-      deleteTexts[j].remove();
-    }
     var rectBox = upcomingEnemiesRect.getBBox();
     var startY = rectBox.y + 20;
+    while (upcomingEnemiesContainer.childElementCount > 1) {
+      upcomingEnemiesContainer.removeChild(upcomingEnemiesContainer.lastChild);
+    }
     for(let i = 0; i < currentEnemyArray.length; i++){
       var enemyInfo = buildEnemyInformation(currentEnemyArray[i]);
       var textElementEnemy = document.createElementNS("http://www.w3.org/2000/svg", "text");
@@ -402,7 +399,7 @@ function updateSVGTowerDefenseElements(worldModel, screen_width, screen_height){
       textElementEnemy.setAttribute("font-size", "14px");
       textElementEnemy.setAttribute("class", "enemy-info");
       textElementEnemy.textContent = "";
-                  // Get the bounding box of the rectangle
+      // Get the bounding box of the rectangle
 
       // Set the position of the text elements
       textElementEnemy.setAttribute("x", rectBox.x + 50); // 10px padding from left edge of rectangle
@@ -461,15 +458,11 @@ function updateSVGTowerDefenseElements(worldModel, screen_width, screen_height){
         gElement.appendChild(textElement);
         parentSvgTowerDefense.appendChild(gElement);
     }
-    console.log(worldModel);
+    // console.log(worldModel);
+    currentEnemyArray = []
     Object.entries(worldModel["key"]).forEach(([key, value]) => {
       if (key.includes("WaveManager")){
-        for (let i = 0; i < value.currentWave.enemies.length; i++) {
-          let enemy = value.currentWave.enemies[i];
-          if(!currentEnemyArray.includes(enemy.enemyType)){
-            currentEnemyArray.push(enemy.enemyType);
-          }
-        }
+        currentEnemyArray = value.currentWave.enemies.map(function(e){ return e.enemyType }).filter((item, i, ar) => ar.indexOf(item) === i);
       }
       if (key != null && value["screenRect"] != null) {
         xOffset = value["screenRect"].x/screen_width*100;
@@ -623,6 +616,7 @@ function updateSVGTowerDefenseElements(worldModel, screen_width, screen_height){
             delete svgTowerDefenseElements[key];
         }
     });
+    
 }
 
 function buildEnemyInformation(enemy){
@@ -636,7 +630,7 @@ function buildEnemyInformation(enemy){
       enemyHealth = 5;
       break;
     case "Hovercopter":
-      enemyName = "Hover Tank";
+      enemyName = "Hover Copter";
       enemyDamage = 6;
       enemyHealth = 10;
       break;
@@ -650,10 +644,21 @@ function buildEnemyInformation(enemy){
       enemyDamage = 9;
       enemyHealth = 20;
       break;
+    case "Super Hovertank":
+      enemyName = "Super Hovertank";
+      enemyDamage = -1; // What should these values be?
+      enemyHealth = -1;
+      break;
+    case "Super Hoverbuggy":
+        enemyName = "Super Hoverbuggy";
+        enemyDamage = -1; // What should these values be?
+        enemyHealth = -1;
+        break;
     default:
-      enemyName = "Hover Buggy";
-      enemyDamage = 2;
-      enemyHealth = 5;
+      console.log("unknown:", enemy)
+      enemyName = "unknown enemy";
+      enemyDamage = 0;
+      enemyHealth = 0;
       break;
   }
   var reConstructedObject = {"Name": enemyName, "Damage": enemyDamage, "Health": enemyHealth};
