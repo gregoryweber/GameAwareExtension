@@ -476,27 +476,6 @@ function updateSVGTowerDefenseElements(worldModel, screen_width, screen_height){
             svgRect.setAttribute("height", height.toString()+"%");
             svgRect.setAttribute("x", xOffset.toString()+"%");
             svgRect.setAttribute("y", yOffset.toString()+"%");
-            if(value["stats"]){
-              gElement.setAttribute("class", "tooltip");
-              tooltipData = buildTooltip(key, value)
-              if(!textElement){
-                textElement =  document.getElementById("tooltip-tower-text");
-              }
-              textElement.textContent = "";
-              
-              Object.keys(tooltipData).forEach(function(key, index) {
-                var tspan = document.createElementNS("http://www.w3.org/2000/svg", "tspan");
-                tspan.setAttribute("x", 10);
-                tspan.setAttribute("dy", "1.4em"); // Line spacing
-                if(!(key.includes("Name"))){
-                  tspan.textContent = key + ": " + tooltipData[key];
-                }
-                else{
-                  tspan.textContent = tooltipData[key];
-                }
-                textElement.appendChild(tspan);
-              });
-            }
         }
         else{
             svgRect = document.createElementNS(
@@ -677,10 +656,8 @@ function buildTooltip(key, data){
   towerDps = data.stats.dps;
   towerFireRate = data.stats["effectDetails"][0].fireRate;
   towerHealth = data["currentHealth"].toString() + "/" + data.stats.startingHealth.toString();
-  
-  let reConstructedObject = {"Name": towerName, "DPS": towerDps, "Fire Rate": towerFireRate, "Health": towerHealth, "Level": level};
 
-  return structuredClone(reConstructedObject);
+  return {"Name": towerName, "DPS": towerDps, "Fire Rate": towerFireRate, "Health": towerHealth, "Level": level};
   
 }
 function createPointTowerDefense(x,y,radius,color,key){

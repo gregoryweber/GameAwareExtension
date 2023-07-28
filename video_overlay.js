@@ -178,7 +178,7 @@ function startGameLoop(){
     lastTweenTime = 0;
     keyFrameIndex = -1;
     tweenIndex = -1;
-    timeToNextKey = 0;
+    timeToNextKey = 1000/key_rate;
     timeToNextTween = 0;
     syncBuffer();
     window.requestAnimationFrame(gameLoop);
@@ -194,6 +194,7 @@ function gameLoop(){
     nowTime = Date.now();
 
     if(nowTime - lastKeyTime >= timeToNextKey && forwardBuffer[keyFrameIndex]){
+        keyFrameIndex = Math.max(0, forwardBuffer.length-2);
         console.log(forwardBuffer[keyFrameIndex])
         catchUpTime += nowTime-lastKeyTime-timeToNextKey;
 
@@ -202,14 +203,8 @@ function gameLoop(){
         console.log(`dateNow: ${dateNow}, start_clock_secs: ${start_clock_secs}, start_game_secs: ${start_game_secs}, broadcastLatency: ${broadcastLatency}, game_time: ${forwardBuffer[keyFrameIndex].game_time}`)
         timeDiff = actualTime - forwardBuffer[keyFrameIndex].game_time
         console.log(`time difference [${keyFrameIndex}/${forwardBuffer.length-1}]: ${timeDiff}`);
-      
-        let range = 200;
-        if (Math.abs(timeDiff-target) > range) {
-            timeToNextKey -= timeDiff - target
-            console.log(`timeToNextKey: ${timeToNextKey}`)
-        } else {
-            timeToNextKey = 1000/key_rate
-        }
+
+        
         tweenIndex = 0;
 
         updateWorldModelWithKey(forwardBuffer[keyFrameIndex]);
@@ -229,7 +224,13 @@ function gameLoop(){
             // syncBuffer();
         }
         //console.log("index ", keyFrameIndex, ": ", forwardBuffer[keyFrameIndex]);
-        keyFrameIndex++;        
+        
+        if (forwardBuffer.length >= 10) {
+            forwardBuffer.shift()
+        } else {
+            keyFrameIndex++;
+        }
+
     }
     //console.log(`tween ${tweenIndex}: ${nowTime-lastTweenTime} >= ${timeToNextTween}`);
     if (nowTime - lastTweenTime >= timeToNextTween && forwardBuffer[keyFrameIndex-1] && forwardBuffer[keyFrameIndex-1].tweens && tweenIndex < tween_rate){
