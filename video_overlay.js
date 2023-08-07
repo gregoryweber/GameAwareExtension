@@ -617,10 +617,10 @@ function updateSVGBloomwoodElements() {
         textContainer.setAttribute("height", "100%");
         textContainer.setAttribute("x", "1px");
         textContainer.setAttribute("y", "1px");
-        textContainer.innerHTML = `<div style="width:100%; height:100%;"><div id="${key}-text-container" style="width:100%; height:100%; font-size:12px; color:red; overflow-wrap: break-word; overflow:auto;">${value["dialogRendered"]}</div></div>`;
+        textContainer.innerHTML = `<div style="width:100%; height:100%;"><div id="${key}-text-container" style="width:100%; height:100%; font-size:12px; color:red; overflow-wrap: break-word; overflow:auto;"></div></div>`;
 
         var dialogueText = textContainer.querySelector("#" + key + "-text-container");
-        dialogueText.innerHTML = value["dialogFull"];
+        dialogueText.innerHTML = dialogArray[dialogArrayIndex];
         dialogueText.style.fontSize = 12 + fontSizeChange + "px";
         dialogueText.style.color = fontColor.toString();
         dialogueText.style.fontFamily = fontType.toString();
