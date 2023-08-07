@@ -243,7 +243,7 @@ function updateDebugOverlayRects() {
         svgRect.setAttribute("x", xOffset.toString() + "%");
         svgRect.setAttribute("y", yOffset.toString() + "%");
         svgRect.setAttribute("fill", "none");
-        // svgRect.setAttribute("stroke", "red");
+        svgRect.setAttribute("stroke", "red");
         svgRect.setAttribute("stroke-width", "2");
         svgRect.setAttribute("position", "absolute");
         svgRect.style.pointerEvents = "all"; // prevent stroke from triggering mouse events
@@ -515,20 +515,17 @@ function updateSVGBloomwoodElements() {
   let yOffset = 0;
   let width = 0;
   let height = 0;
-  
   Object.entries(worldModel["key"]).forEach(([key, value]) => { // idk why you need a for each loop here when only visualNovelText object is needed
     if (key.includes("visualNovelText") && value["screenRect"] != null) { // could just do this: let value = worldModel["key"]["visualNovelText"]; let key = "visualNovelText"
       xOffset = (value["screenRect"].x / screen_width) * 100 - 0.5;
       yOffset = (value["screenRect"].y / screen_height) * 100;
       width = (value["screenRect"].w / screen_width) * 100;
-      height = (value["screenRect"].h / screen_height) * 100;
-
+      height = (value["screenRect"].h / screen_height) * 100;      
       var dialogContainer = document.getElementById("dialog_container");
       dialogContainer.setAttribute("width", width.toString() + "%");
       dialogContainer.setAttribute("height", height.toString() + "%");
       dialogContainer.setAttribute("x", xOffset.toString() + "%");
       dialogContainer.setAttribute("y", yOffset.toString() + "%");
-      
       var choicesContainer = document.getElementById("choice1_container")
       choicesContainer.setAttribute("width", (width/4.8).toString() + "%");
       choicesContainer.setAttribute("height", (height).toString() + "%");
@@ -540,8 +537,18 @@ function updateSVGBloomwoodElements() {
       choicesContainer2.setAttribute("height", (height).toString() + "%");
       choicesContainer2.setAttribute("x", (xOffset+width/2.1).toString() + "%");
       choicesContainer2.setAttribute("y", (yOffset+height/1.2).toString() + "%");
-
-      var svgRectDialogue = svgBloomwoodElements[key];
+      
+      var previousButton = document.getElementById("previous-dialog-buttton");
+      var nextButton = document.getElementById("next-dialog-button");
+      nextButton.style.position = "absolute";
+      nextButton.style.top = yOffset + height / 2 + "%";
+      nextButton.style.left = xOffset + width + "%";
+      var previousButtonPercent = (previousButton.clientWidth / previousButton.parentElement.clientWidth) * 100;
+      previousButton.style.position = "absolute";
+      previousButton.style.top = yOffset + height / 2 + "%";
+      previousButton.style.left = xOffset - (previousButtonPercent + (previousButtonPercent * 0.1)) + "%";
+    
+        var svgRectDialogue = svgBloomwoodElements[key];
       if (svgRectDialogue) {
         var textContainer = dialogContainer.getElementById(key + "-text");
         var dialogueText = textContainer.querySelector("#" + key + "-text-container");
@@ -684,18 +691,9 @@ function updateSVGBloomwoodElements() {
         dialogContainer.appendChild(textContainer);
         svgBloomwoodElements[key] = svgRectDialogue;
         
-        var previousButton = document.getElementById("previous-dialog-buttton");
-        var nextButton = document.getElementById("next-dialog-button");
-        nextButton.style.position = "absolute";
-        nextButton.style.top = yOffset + height/2 + "%";
-        nextButton.style.left = xOffset + width + 1+ "%";
+        
+    }
 
-        previousButton.style.position = "absolute";
-        previousButton.style.top = yOffset + height/2 + "%";
-        previousButton.style.left = xOffset - 3 + "%";
-
-        console.log("SVG Setup complete")
-      }
     }
   });
 }
