@@ -95,10 +95,6 @@ function syncBuffer(){
     //broadcastLatency = number from Twitch, latency from the streamer to the viewer
     let dateNow = Date.now();
     let actualTime = dateNow - start_clock_secs - start_game_secs - (broadcastLatency * 1000);
-    console.log('dateNow', dateNow)
-    console.log('start_clock_secs', start_clock_secs)
-    console.log('start_game_secs', start_game_secs)
-    console.log('actualTime', actualTime)
     // Search initial buffer, find key within 1/key_frame_rate of the calculated keyTime
     // Target key frame should be the same as key time if we ignore the hundreds values (only the thousands are the seconds);
     // console.log("pre-initialBuffer: ", initialBuffer);
@@ -247,7 +243,7 @@ function updateDebugOverlayRects() {
         svgRect.setAttribute("x", xOffset.toString() + "%");
         svgRect.setAttribute("y", yOffset.toString() + "%");
         svgRect.setAttribute("fill", "none");
-        // svgRect.setAttribute("stroke", "red");
+        svgRect.setAttribute("stroke", "red");
         svgRect.setAttribute("stroke-width", "2");
         svgRect.setAttribute("position", "absolute");
         svgRect.style.pointerEvents = "all"; // prevent stroke from triggering mouse events
@@ -519,86 +515,185 @@ function updateSVGBloomwoodElements() {
   let yOffset = 0;
   let width = 0;
   let height = 0;
-  Object.entries(worldModel["key"]).forEach(([key, value]) => {
-    if (key.includes("visualNovelText") && value["screenRect"] != null) {
+  Object.entries(worldModel["key"]).forEach(([key, value]) => { // idk why you need a for each loop here when only visualNovelText object is needed
+    if (key.includes("visualNovelText") && value["screenRect"] != null) { // could just do this: let value = worldModel["key"]["visualNovelText"]; let key = "visualNovelText"
       xOffset = (value["screenRect"].x / screen_width) * 100 - 0.5;
       yOffset = (value["screenRect"].y / screen_height) * 100;
       width = (value["screenRect"].w / screen_width) * 100;
-      height = (value["screenRect"].h / screen_height) * 100;
+      height = (value["screenRect"].h / screen_height) * 100;      
       var dialogContainer = document.getElementById("dialog_container");
-      var svgRect = svgBloomwoodElements[key];
-      if (svgRect) {
-        dialogContainer.setAttribute("width", width.toString() + "%");
-        dialogContainer.setAttribute("height", height.toString() + "%");
-        dialogContainer.setAttribute("x", xOffset.toString() + "%");
-        dialogContainer.setAttribute("y", yOffset.toString() + "%");
+      dialogContainer.setAttribute("width", width.toString() + "%");
+      dialogContainer.setAttribute("height", height.toString() + "%");
+      dialogContainer.setAttribute("x", xOffset.toString() + "%");
+      dialogContainer.setAttribute("y", yOffset.toString() + "%");
+      var choicesContainer = document.getElementById("choice1_container")
+      choicesContainer.setAttribute("width", (width/4.8).toString() + "%");
+      choicesContainer.setAttribute("height", (height).toString() + "%");
+      choicesContainer.setAttribute("x", (xOffset+width/4.2).toString() + "%");
+      choicesContainer.setAttribute("y", (yOffset+height/1.2).toString() + "%");
 
-        var foreignObject = dialogContainer.getElementById(key + "-text");
-        var textContainer = foreignObject.querySelector(
-          "#" + key + "-text-container"
-        );
+      var choicesContainer2 = document.getElementById("choice2_container")
+      choicesContainer2.setAttribute("width", (width/4.8).toString() + "%");
+      choicesContainer2.setAttribute("height", (height).toString() + "%");
+      choicesContainer2.setAttribute("x", (xOffset+width/2.1).toString() + "%");
+      choicesContainer2.setAttribute("y", (yOffset+height/1.2).toString() + "%");
+      
+      var previousButton = document.getElementById("previous-dialog-buttton");
+      var nextButton = document.getElementById("next-dialog-button");
+      nextButton.style.position = "absolute";
+      nextButton.style.top = yOffset + height / 2 + "%";
+      nextButton.style.left = xOffset + width + "%";
+      var previousButtonPercent = (previousButton.clientWidth / previousButton.parentElement.clientWidth) * 100;
+      previousButton.style.position = "absolute";
+      previousButton.style.top = yOffset + height / 2 + "%";
+      previousButton.style.left = xOffset - (previousButtonPercent + (previousButtonPercent * 0.1)) + "%";
+    
+        var svgRectDialogue = svgBloomwoodElements[key];
+      if (svgRectDialogue) {
+        var textContainer = dialogContainer.getElementById(key + "-text");
+        var dialogueText = textContainer.querySelector("#" + key + "-text-container");
         translateText(dialogArray[dialogArrayIndex], langTarget)
         .then((translatedText) => {
-          textContainer.innerHTML = translatedText;
+          dialogueText.innerHTML = translatedText;
         })
         .catch((error) => {
           console.error(error);
         });
-        textContainer.style.fontSize = 12 + fontSizeChange + "px";
-        textContainer.style.color = fontColor.toString();
-        textContainer.style.fontFamily = fontType.toString();
+        dialogueText.style.fontSize = 12 + fontSizeChange + "px";
+        dialogueText.style.color = fontColor.toString();
+        dialogueText.style.fontFamily = fontType.toString();
+
+        if (value["currentChoices"] && value["currentChoices"][0]) {
+          document.getElementById("dialog_choices_container").style.visibility = "visible";
+          var textContainerChoice = choicesContainer.getElementById(key + "-text-choice");
+          if (textContainerChoice) {
+            var choiceText = textContainerChoice.querySelector("#" + key + "Choice-text-container");
+            translateText(value["currentChoices"][0], langTarget)
+            .then((translatedText) => {
+              choiceText.innerHTML = translatedText;
+            })
+            .catch((error) => {
+              console.error(error);
+            });
+            choiceText.style.fontSize = 12 + fontSizeChange + "px";
+            choiceText.style.color = fontColor.toString();
+            choiceText.style.fontFamily = fontType.toString();
+          }
+        } else {
+          document.getElementById("dialog_choices_container").style.visibility = "hidden";
+        }
+
+        if (value["currentChoices"] && value["currentChoices"][1]) {
+          document.getElementById("dialog_choices_container2").style.visibility = "visible";
+          var textContainerChoice2 = choicesContainer2.getElementById(key + "-text-choice2")
+          if (textContainerChoice2) {
+            var choiceText2 = textContainerChoice2.querySelector("#" + key + "Choice-text-container2");
+            translateText(value["currentChoices"][1], langTarget)
+            .then((translatedText) => {
+              choiceText2.innerHTML = translatedText;
+            })
+            .catch((error) => {
+              console.error(error);
+            });
+            choiceText2.style.fontSize = 12 + fontSizeChange + "px";
+            choiceText2.style.color = fontColor.toString();
+            choiceText2.style.fontFamily = fontType.toString();
+          }
+        } else {
+          document.getElementById("dialog_choices_container2").style.visibility = "hidden";
+        }
       } else {
-        svgRect = document.createElementNS(
-          "http://www.w3.org/2000/svg",
-          "rect"
-        );
-        svgRect.setAttribute("id", key);
+        svgRectDialogue = document.createElementNS("http://www.w3.org/2000/svg","rect");
+        svgRectDialogue.setAttribute("id", key);
+        svgRectDialogue.setAttribute("width", "100%");
+        svgRectDialogue.setAttribute("height", "100%");
+        svgRectDialogue.setAttribute("x", "0%");
+        svgRectDialogue.setAttribute("y", "0%");
+        svgRectDialogue.setAttribute("fill", "white");
 
-        dialogContainer.setAttribute("width", width.toString() + "%");
-        dialogContainer.setAttribute("height", height.toString() + "%");
-        dialogContainer.setAttribute("x", xOffset.toString() + "%");
-        dialogContainer.setAttribute("y", yOffset.toString() + "%");
+        var textContainer = document.createElementNS("http://www.w3.org/2000/svg","foreignObject");
+        textContainer.setAttribute("id", key + "-text");
+        textContainer.setAttribute("width", "100%");
+        textContainer.setAttribute("height", "100%");
+        textContainer.setAttribute("x", "1px");
+        textContainer.setAttribute("y", "1px");
+        textContainer.innerHTML = `<div style="width:100%; height:100%;"><div id="${key}-text-container" style="width:100%; height:100%; font-size:12px; color:red; overflow-wrap: break-word; overflow:auto;"></div></div>`;
+
+        var dialogueText = textContainer.querySelector("#" + key + "-text-container");
+        dialogueText.innerHTML = dialogArray[dialogArrayIndex];
+        dialogueText.style.fontSize = 12 + fontSizeChange + "px";
+        dialogueText.style.color = fontColor.toString();
+        dialogueText.style.fontFamily = fontType.toString();
+
+        if (value["currentChoices"] && value["currentChoices"][0]) {
+          document.getElementById("dialog_choices_container").style.visibility = "visible";
+
+          var svgRectChoice = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+          svgRectChoice.setAttribute("id", key + "choice");
+          svgRectChoice.setAttribute("width", "100%");
+          svgRectChoice.setAttribute("height", "100%");
+          svgRectChoice.setAttribute("x", "0%");
+          svgRectChoice.setAttribute("y", "0%");
+          svgRectChoice.setAttribute("fill", "aquamarine");
+
+          var textContainerChoice = document.createElementNS("http://www.w3.org/2000/svg","foreignObject");
+          textContainerChoice.setAttribute("id", key + "-text-choice");
+          textContainerChoice.setAttribute("width", "100%");
+          textContainerChoice.setAttribute("height", "100%");
+          textContainerChoice.setAttribute("x", "1px");
+          textContainerChoice.setAttribute("y", "1px");
+          textContainerChoice.innerHTML = `<div style="width:100%; height:100%;"><div id="${key}Choice-text-container" style="width:100%; height:100%; font-size:12px; color:red; overflow-wrap: break-word; overflow:auto;">${value["currentChoices"][0]}</div></div>`;
+
+          var choiceText = textContainerChoice.querySelector("#" + key + "Choice-text-container");
+          choiceText.innerHTML = value["currentChoices"][0];
+          choiceText.style.fontSize = 12 + fontSizeChange + "px";
+          choiceText.style.color = fontColor.toString();
+          choiceText.style.fontFamily = fontType.toString();
+
+          choicesContainer.appendChild(svgRectChoice)
+          choicesContainer.appendChild(textContainerChoice)
+        } else {
+          document.getElementById("dialog_choices_container").style.visibility = "hidden";
+        }
+
+        if (value["currentChoices"] && value["currentChoices"][1]) {
+          document.getElementById("dialog_choices_container2").style.visibility = "visible";
+
+          var svgRectChoice2 = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+          svgRectChoice2.setAttribute("id", key + "choice2");
+          svgRectChoice2.setAttribute("width", "100%");
+          svgRectChoice2.setAttribute("height", "100%");
+          svgRectChoice2.setAttribute("x", "0%");
+          svgRectChoice2.setAttribute("y", "0%");
+          svgRectChoice2.setAttribute("fill", "aquamarine");
+
+          var textContainerChoice2 = document.createElementNS("http://www.w3.org/2000/svg","foreignObject");
+          textContainerChoice2.setAttribute("id", key + "-text-choice2");
+          textContainerChoice2.setAttribute("width", "100%");
+          textContainerChoice2.setAttribute("height", "100%");
+          textContainerChoice2.setAttribute("x", "1px");
+          textContainerChoice2.setAttribute("y", "1px");
+          textContainerChoice2.innerHTML = `<div style="width:100%; height:100%;"><div id="${key}Choice-text-container2" style="width:100%; height:100%; font-size:12px; color:red; overflow-wrap: break-word; overflow:auto;">${value["currentChoices"][1]}</div></div>`;
+
+          var choiceText2 = textContainerChoice2.querySelector("#" + key + "Choice-text-container2");
+          choiceText2.innerHTML = value["currentChoices"][1];
+          choiceText2.style.fontSize = 12 + fontSizeChange + "px";
+          choiceText2.style.color = fontColor.toString();
+          choiceText2.style.fontFamily = fontType.toString();
+
+          choicesContainer2.appendChild(svgRectChoice2)
+          choicesContainer2.appendChild(textContainerChoice2)
+        } else {
+          document.getElementById("dialog_choices_container2").style.visibility = "hidden";
+        }
+
+        dialogContainer.appendChild(svgRectDialogue);
+        dialogContainer.appendChild(textContainer);
+        svgBloomwoodElements[key] = svgRectDialogue;
         
-        svgRect.setAttribute("width", "100%");
-        svgRect.setAttribute("height", "100%");
-        svgRect.setAttribute("x", "0%");
-        svgRect.setAttribute("y", "0%");
-        svgRect.setAttribute("fill", "white");
-
-        var foreignObject = document.createElementNS(
-          "http://www.w3.org/2000/svg",
-          "foreignObject"
-        );
-        foreignObject.setAttribute("id", key + "-text");
-        foreignObject.setAttribute("width", "100%");
-        foreignObject.setAttribute("height", "100%");
-        foreignObject.setAttribute("x", "1px");
-        foreignObject.setAttribute("y", "1px");
-
-        foreignObject.innerHTML = `
-            <div style="width:100%; height:100%;"><div id="${key}-text-container" style="width:100%; height:100%; font-size:12px; color:red; overflow-wrap: break-word; overflow:auto;">${value["dialogRendered"]}</div></div>`;
-
-        var textContainer = foreignObject.querySelector(
-          "#" + key + "-text-container"
-        );
-        textContainer.innerHTML = value["dialogFull"];
-        textContainer.style.fontSize = 12 + fontSizeChange + "px";
-        textContainer.style.color = fontColor.toString();
-        textContainer.style.fontFamily = fontType.toString();
-        dialogContainer.appendChild(svgRect);
-        dialogContainer.appendChild(foreignObject);
-        svgBloomwoodElements[key] = svgRect;
         
-        var previousButton = document.getElementById("previous-dialog-buttton");
-        var nextButton = document.getElementById("next-dialog-button");
-        nextButton.style.position = "absolute";
-        nextButton.style.top = yOffset + height/2 + "%";
-        nextButton.style.left = xOffset + width + 1+ "%";
+    }
 
-        previousButton.style.position = "absolute";
-        previousButton.style.top = yOffset + height/2 + "%";
-        previousButton.style.left = xOffset - 3 + "%";
-      }
     }
   });
 }
@@ -691,14 +786,17 @@ function updateDraw() {
   }
   if (isBloomwoodVisible) {
     document.getElementById("accessibility_container").style.visibility = "visible";
-    document.getElementById("parent_svg_bloomwood").style.visibility =
-      "visible";
+    document.getElementById("parent_svg_bloomwood").style.visibility = "visible";
     document.getElementById("dialog_browser_container").style.visibility = "visible";
+    document.getElementById("dialog_choices_container").style.visibility = "visible";
+    document.getElementById("dialog_choices_container2").style.visibility = "visible";
     updateSVGBloomwoodElements();
   } else {
     document.getElementById("accessibility_container").style.visibility = "hidden";
     document.getElementById("parent_svg_bloomwood").style.visibility = "hidden";
     document.getElementById("dialog_browser_container").style.visibility = "hidden";
+    document.getElementById("dialog_choices_container").style.visibility = "hidden";
+    document.getElementById("dialog_choices_container2").style.visibility = "hidden";
   }
 }
 
@@ -712,7 +810,12 @@ var newDialog = "";
 function gameLoop(){
     nowTime = Date.now();
 
-    if(nowTime - lastKeyTime >= timeToNextKey && forwardBuffer[keyFrameIndex]){
+    if (bloomwoodCheckbox.checked && forwardBuffer[keyFrameIndex]) {
+      isBloomwoodVisible = forwardBuffer[keyFrameIndex].key.visualNovelText != undefined
+    }
+    
+    if (nowTime - lastKeyTime >= timeToNextKey && forwardBuffer[keyFrameIndex]){
+        console.log(forwardBuffer[keyFrameIndex])
         catchUpTime += nowTime-lastKeyTime-timeToNextKey;
         let dateNow = Date.now();
         let actualTime = dateNow - start_clock_secs - start_game_secs - (broadcastLatency * 1000);
@@ -756,7 +859,7 @@ function gameLoop(){
             // console.log("Syncing!")
             //syncBuffer();
         }
-        keyFrameIndex++;        
+        keyFrameIndex++;
     }
     if (nowTime - lastTweenTime >= timeToNextTween && forwardBuffer[keyFrameIndex-1] && tweenIndex < tween_rate){
         catchUpTime = nowTime-lastTweenTime-Math.max(timeToNextTween, 0);
@@ -796,10 +899,12 @@ function displayDebugOverlay() {
   console.log(isDebugVisible);
 }
 
+var bloomwoodCheckbox = {};
+var debugCheckbox = {};
 function changeOverlay() {
-  const debugCheckbox = document.querySelector('input[value="debug"]');
+  debugCheckbox = document.querySelector('input[value="debug"]');
   // const mazeCheckbox = document.querySelector('input[value="maze"]');
-  const bloomwoodCheckbox = document.querySelector('input[value="bloomwood"]');
+  bloomwoodCheckbox = document.querySelector('input[value="bloomwood"]');
 
   // Toggle the visibility of all the selected overlays
   isDebugVisible = debugCheckbox.checked;
@@ -909,3 +1014,17 @@ function dialogueNotification(){
       nextButton.style.backgroundColor = '#FF0000';
     }
 }
+
+window.addEventListener('keydown', function (e) {
+  console.log(e.key)
+
+  function keyToFunction(key, func) {
+    if (e.key == key) {
+      func();
+    }
+  }
+  keyToFunction("-", decreaseFontSize) 
+  keyToFunction("=", increaseFontSize)
+  keyToFunction("ArrowLeft", previousDialogArray) 
+  keyToFunction("ArrowRight", advanceDialogArray)
+}, false);

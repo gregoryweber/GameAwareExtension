@@ -14,12 +14,22 @@
     <!-- If you use any external libraries, such as jQuery, you must include
       them as part of your extension.  Twitch does not allow extensions to link
       to external libraries. -->
-      <svg id = "parent_svg_maze" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;">
+      <svg id = "parent_svg_maze">
       </svg>
-      <svg id = "parent_svg_debug" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;">
+      <svg id = "parent_svg_debug">
       </svg>
-      <svg id = "parent_svg_bloomwood" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;">
-        <svg id = "dialog_container" style="position: absolute;">
+      <svg id = "parent_svg_bloomwood">
+        <svg id = "dialog_container">
+        </svg>
+      </svg>
+      <svg id = "dialog_choices_container">
+        <svg id="choice1_container">
+
+        </svg>
+      </svg>
+      <svg id = "dialog_choices_container2">
+        <svg id="choice2_container">
+
         </svg>
       </svg>
       <div id = "dialog_browser_container">
@@ -40,41 +50,34 @@
         <button id = "minus" onclick="decrementTweenOffset()">-</button>
       </div>
       <div id="accessibility_container">
-        <div>
+        <div id="accessibility_buttons">
           <button id="increase-font-size-button" onclick="increaseFontSize()">Font Size (+)</button>
           <button id="decrease-font-size-button" onclick="decreaseFontSize()">Font Size (-)</button>
+            <label for="font-color-select">Font Color:</label>
+            <select id="font-color-select" onchange="changeFontColor()">
+              <option value="black">Black</option>
+              <option value="red">Red</option>
+              <option value="blue">Blue</option>
+            </select>
+            <label for="font-type-select">Font Type:</label>
+            <select id="font-type-select" onchange="changeFontType()">
+              <option value="Arial">Arial</option>
+              <option value="Helvetica">Helvetica Neue</option>
+              <option value="Times New Roman">Times New Roman</option>
+              <option value="Verdana">Verdana</option>
+              <option value="Tahoma">Tahoma</option>
+              <option value="OpenDyslexic">OpenDyslexic</option>
+            </select>
+            <label for="language-select">Language:</label>
+            <select id="language-select" onchange="changeLanguage()">
+              <option value="en">English</option>
+              <option value="fr">French</option>
+              <option value="es">Spanish</option>
+            </select>
+            <label>
+              <input id ="dialogCheckbox" type="checkbox" checked="true" name="dialog" value="live" onchange="changeDialogSettings()"> Enabled Live Dialogue
+            </label>        
         </div>
-        <div>
-          <label for="font-color-select">Font Color:</label>
-          <select id="font-color-select" onchange="changeFontColor()">
-            <option value="black">Black</option>
-            <option value="red">Red</option>
-            <option value="blue">Blue</option>
-          </select>
-        </div>
-        <div>
-          <label for="font-type-select">Font Type:</label>
-          <select id="font-type-select" onchange="changeFontType()">
-            <option value="Arial">Arial</option>
-            <option value="Helvetica">Helvetica Neue</option>
-            <option value="Times New Roman">Times New Roman</option>
-            <option value="Verdana">Verdana</option>
-            <option value="Tahoma">Tahoma</option>
-            <option value="OpenDyslexic">OpenDyslexic</option>
-          </select>
-        </div>
-        <div>
-          <label for="language-select">Language:</label>
-          <select id="language-select" onchange="changeLanguage()">
-            <option value="en">English</option>
-            <option value="fr">French</option>
-            <option value="es">Spanish</option>
-          </select>
-        </div>
-        <div>
-          <label>
-            <input id ="dialogCheckbox" type="checkbox" checked="true" name="dialog" value="live" onchange="changeDialogSettings()"> Enabled Live Dialogue
-          </label>        </div>
       </div>
     </body>
 </html>
