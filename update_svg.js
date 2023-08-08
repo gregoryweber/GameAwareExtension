@@ -9,7 +9,7 @@ var isDebugVisible = false;
 var isMazeVisible = false;
 var isTowerDefenseVisible = false;
 var currentEnemyArray = [];
-
+let globalWorldModel;
 function startSvg() {
     parentSvgDebug = document.getElementById("parent_svg_debug");
     parentSvgMaze = document.getElementById("parent_svg_maze");
@@ -40,6 +40,7 @@ function changeOverlay(){
 
 
 function updateSvg(worldModel, screen_width, screen_height){
+    globalWorldModel = worldModel;
     if(isDebugVisible){
         document.getElementById("parent_svg_debug").style.visibility = "visible";
         updateSvgDebug(worldModel, screen_width, screen_height);
@@ -377,19 +378,16 @@ function updateSVGTowerDefenseElements(worldModel, screen_width, screen_height){
     let yOffset = 0;
     let width = 0;
     let height = 0;  
-    let tooltipInfo;
     var upcomingEnemiesContainer = document.getElementById("upcoming_enemy_container");
     var upcomingEnemiesRect = document.getElementById("upcoming_enemy_rect");
+    let tooltipData;
     // Create a new text element and set its content to enemyInfo
     // Select all elements with class "enemy-info" inside the container
-    var deleteTexts = upcomingEnemiesContainer.querySelectorAll(".enemy-info");
-
-    // Loop through all text elements and remove them
-    for (let j = 0; j < deleteTexts.length; j++) {
-      deleteTexts[j].remove();
-    }
     var rectBox = upcomingEnemiesRect.getBBox();
     var startY = rectBox.y + 20;
+    while (upcomingEnemiesContainer.childElementCount > 1) {
+      upcomingEnemiesContainer.removeChild(upcomingEnemiesContainer.lastChild);
+    }
     for(let i = 0; i < currentEnemyArray.length; i++){
       var enemyInfo = buildEnemyInformation(currentEnemyArray[i]);
       var textElementEnemy = document.createElementNS("http://www.w3.org/2000/svg", "text");
@@ -402,7 +400,7 @@ function updateSVGTowerDefenseElements(worldModel, screen_width, screen_height){
       textElementEnemy.setAttribute("font-size", "14px");
       textElementEnemy.setAttribute("class", "enemy-info");
       textElementEnemy.textContent = "";
-                  // Get the bounding box of the rectangle
+      // Get the bounding box of the rectangle
 
       // Set the position of the text elements
       textElementEnemy.setAttribute("x", rectBox.x + 50); // 10px padding from left edge of rectangle
@@ -461,49 +459,23 @@ function updateSVGTowerDefenseElements(worldModel, screen_width, screen_height){
         gElement.appendChild(textElement);
         parentSvgTowerDefense.appendChild(gElement);
     }
-    console.log(worldModel);
+    // console.log(worldModel);
+    currentEnemyArray = []
     Object.entries(worldModel["key"]).forEach(([key, value]) => {
       if (key.includes("WaveManager")){
-        for (let i = 0; i < value.currentWave.enemies.length; i++) {
-          let enemy = value.currentWave.enemies[i];
-          if(!currentEnemyArray.includes(enemy.enemyType)){
-            currentEnemyArray.push(enemy.enemyType);
-          }
-        }
+        currentEnemyArray = value.currentWave.enemies.map(function(e){ return e.enemyType }).filter((item, i, ar) => ar.indexOf(item) === i);
       }
       if (key != null && value["screenRect"] != null) {
         xOffset = value["screenRect"].x/screen_width*100;
         yOffset = value["screenRect"].y/screen_height*100;
         width = value["screenRect"].w/screen_width*100;
         height = value["screenRect"].h/screen_height*100;
-        var tooltipData;
         var svgRect = svgTowerDefenseElements[key];
         if (svgRect) {
             svgRect.setAttribute("width", width.toString()+"%");
             svgRect.setAttribute("height", height.toString()+"%");
             svgRect.setAttribute("x", xOffset.toString()+"%");
             svgRect.setAttribute("y", yOffset.toString()+"%");
-            if(value["stats"]){
-              gElement.setAttribute("class", "tooltip");
-              tooltipData = buildTooltip(key, value)
-              if(!textElement){
-                textElement =  document.getElementById("tooltip-tower-text");
-              }
-              textElement.textContent = "";
-              
-              Object.keys(tooltipData).forEach(function(key, index) {
-                var tspan = document.createElementNS("http://www.w3.org/2000/svg", "tspan");
-                tspan.setAttribute("x", 10);
-                tspan.setAttribute("dy", "1.4em"); // Line spacing
-                if(!(key.includes("Name"))){
-                  tspan.textContent = key + ": " + tooltipData[key];
-                }
-                else{
-                  tspan.textContent = tooltipData[key];
-                }
-                textElement.appendChild(tspan);
-              });
-            }
         }
         else{
             svgRect = document.createElementNS(
@@ -520,13 +492,13 @@ function updateSVGTowerDefenseElements(worldModel, screen_width, screen_height){
             // svgRect.setAttribute("stroke-width", "2");
             svgRect.setAttribute("position", "absolute");
             if(value["stats"]){
-              tooltipData = buildTooltip(key, value);
+              tooltipData = buildTooltip(key);
               svgRect.style.pointerEvents = "all"; // prevent stroke from triggering mouse events
-              svgRect.addEventListener("mousemove", (evt) => {                  
+              svgRect.addEventListener("mousemove", function(evt){
+                console.log(globalWorldModel)
+                  tooltipData = buildTooltip(key);
                   var towerX = parseFloat(svgRect.getAttribute("x")) + parseFloat(svgRect.getAttribute("width"))/2;
                   var towerY = parseFloat(svgRect.getAttribute("y")) + parseFloat(svgRect.getAttribute("height"))/2;
-                  // console.log(value);
-    
                   var anchorTower = document.getElementById("tooltip-tower-circle");
                   if(!anchorTower){
                     anchorTower =  createPointTowerDefense(towerX, towerY, 5, "black", "tooltip-tower");
@@ -623,6 +595,7 @@ function updateSVGTowerDefenseElements(worldModel, screen_width, screen_height){
             delete svgTowerDefenseElements[key];
         }
     });
+    
 }
 
 function buildEnemyInformation(enemy){
@@ -636,7 +609,7 @@ function buildEnemyInformation(enemy){
       enemyHealth = 5;
       break;
     case "Hovercopter":
-      enemyName = "Hover Tank";
+      enemyName = "Hover Copter";
       enemyDamage = 6;
       enemyHealth = 10;
       break;
@@ -650,44 +623,43 @@ function buildEnemyInformation(enemy){
       enemyDamage = 9;
       enemyHealth = 20;
       break;
+    case "Super Hovertank":
+      enemyName = "Super Hovertank";
+      enemyDamage = -1; // What should these values be?
+      enemyHealth = -1;
+      break;
+    case "Super Hoverbuggy":
+        enemyName = "Super Hoverbuggy";
+        enemyDamage = -1; // What should these values be?
+        enemyHealth = -1;
+        break;
     default:
-      enemyName = "Hover Buggy";
-      enemyDamage = 2;
-      enemyHealth = 5;
+      console.log("unknown:", enemy)
+      enemyName = "unknown enemy";
+      enemyDamage = 0;
+      enemyHealth = 0;
       break;
   }
   var reConstructedObject = {"Name": enemyName, "Damage": enemyDamage, "Health": enemyHealth};
   return reConstructedObject;
 }
 
-function buildTooltip(key, data){
-  var towerName;
-  var towerDps;
-  var towerHealth;
-  var towerFireRate;
-  var level;
-  // switch(data.stats.cost){
-  //   case 4:
-  //     towerName = "Assault Cannon - Level" + data.stats.level;
-  //     break;
-  //   case 12:
-  //     towerName = "Rocket Platform - Level" + data.stats.level;
-  //     break;
-  //   case 15:
-  //     towerName = "Plasma Lance - Level" + data.stats.level;
-  //     break;
-  //   default:
-  //     towerName = key.toString() + " - Level" + data.stats.level;
-  // }
+function buildTooltip(key){
+  let data = globalWorldModel["key"][key];
+  let towerName;
+  let towerDps;
+  let towerHealth;
+  let towerFireRate;
+  let level;
+
   towerName = data.type
   level = data.stats.level
   towerDps = data.stats.dps;
   towerFireRate = data.stats["effectDetails"][0].fireRate;
   towerHealth = data["currentHealth"].toString() + "/" + data.stats.startingHealth.toString();
+
+  return {"Name": towerName, "DPS": towerDps, "Fire Rate": towerFireRate, "Health": towerHealth, "Level": level};
   
-  var reConstructedObject = {"Name": towerName, "DPS": towerDps, "Fire Rate": towerFireRate, "Health": towerHealth, "Level": level};
-  // console.log(reConstructedObject);
-  return reConstructedObject;
 }
 function createPointTowerDefense(x,y,radius,color,key){
     var svgPoint = document.createElementNS(
