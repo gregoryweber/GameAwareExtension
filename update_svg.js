@@ -9,7 +9,7 @@ var isDebugVisible = false;
 var isMazeVisible = false;
 var isTowerDefenseVisible = false;
 var currentEnemyArray = [];
-
+let globalWorldModel;
 function startSvg() {
     parentSvgDebug = document.getElementById("parent_svg_debug");
     parentSvgMaze = document.getElementById("parent_svg_maze");
@@ -40,6 +40,7 @@ function changeOverlay(){
 
 
 function updateSvg(worldModel, screen_width, screen_height){
+    globalWorldModel = worldModel;
     if(isDebugVisible){
         document.getElementById("parent_svg_debug").style.visibility = "visible";
         updateSvgDebug(worldModel, screen_width, screen_height);
@@ -377,9 +378,9 @@ function updateSVGTowerDefenseElements(worldModel, screen_width, screen_height){
     let yOffset = 0;
     let width = 0;
     let height = 0;  
-    let tooltipInfo;
     var upcomingEnemiesContainer = document.getElementById("upcoming_enemy_container");
     var upcomingEnemiesRect = document.getElementById("upcoming_enemy_rect");
+    let tooltipData;
     // Create a new text element and set its content to enemyInfo
     // Select all elements with class "enemy-info" inside the container
     var rectBox = upcomingEnemiesRect.getBBox();
@@ -469,7 +470,6 @@ function updateSVGTowerDefenseElements(worldModel, screen_width, screen_height){
         yOffset = value["screenRect"].y/screen_height*100;
         width = value["screenRect"].w/screen_width*100;
         height = value["screenRect"].h/screen_height*100;
-        var tooltipData;
         var svgRect = svgTowerDefenseElements[key];
         if (svgRect) {
             svgRect.setAttribute("width", width.toString()+"%");
@@ -492,13 +492,13 @@ function updateSVGTowerDefenseElements(worldModel, screen_width, screen_height){
             // svgRect.setAttribute("stroke-width", "2");
             svgRect.setAttribute("position", "absolute");
             if(value["stats"]){
-              tooltipData = buildTooltip(key, value);
+              tooltipData = buildTooltip(key);
               svgRect.style.pointerEvents = "all"; // prevent stroke from triggering mouse events
-              svgRect.addEventListener("mousemove", (evt) => {                  
+              svgRect.addEventListener("mousemove", function(evt){
+                console.log(globalWorldModel)
+                  tooltipData = buildTooltip(key);
                   var towerX = parseFloat(svgRect.getAttribute("x")) + parseFloat(svgRect.getAttribute("width"))/2;
                   var towerY = parseFloat(svgRect.getAttribute("y")) + parseFloat(svgRect.getAttribute("height"))/2;
-                  // console.log(value);
-    
                   var anchorTower = document.getElementById("tooltip-tower-circle");
                   if(!anchorTower){
                     anchorTower =  createPointTowerDefense(towerX, towerY, 5, "black", "tooltip-tower");
@@ -644,7 +644,8 @@ function buildEnemyInformation(enemy){
   return reConstructedObject;
 }
 
-function buildTooltip(key, data){
+function buildTooltip(key){
+  let data = globalWorldModel["key"][key];
   let towerName;
   let towerDps;
   let towerHealth;
