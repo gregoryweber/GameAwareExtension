@@ -3,6 +3,14 @@ var express = require("express");
 var bodyParser = require("body-parser");
 const redis = require("redis");
 const cors = require("cors");
+var https = require('https');
+var fs = require('fs');
+
+// Replace cert file and key paths if needed, make sure you know where these are stored on the server
+// var options = {
+//   cert: fs.readFileSync('/etc/letsencrypt/live/cmuctpawsec2.com/fullchain.pem'),
+//   key: fs.readFileSync('/etc/letsencrypt/live/cmuctpawsec2.com/privkey.pem')
+// };
 
 /* Express Step 1: Creating an express application */
 var app = express();
@@ -10,10 +18,19 @@ var app = express();
 // Set port for express app
 var port = 3000;
 
+//REMOTE CORS SETTINGS, UNCOMMENT TO USE
+// Asking CORS to whitelist the URL that the front end is served from
+// app.use(
+//   cors({
+//     origin: "https://e1w80fk5x0z2uvkrzqorkp4ajn2zf0.ext-twitch.tv", // Update this with the proper extension id
+//   })
+// );
+
+
 // Asking CORS to whitelist the URL that the front end is served from
 app.use(
   cors({
-    origin: "http://localhost:8080", // Update this with front end server
+    origin: ["http://localhost:8080", "http://127.0.0.1"], // Update this with front end server
   })
 );
 
@@ -25,9 +42,14 @@ app.listen(port, () => {
 // Use body-parser library to help parse incoming request bodies
 app.use(bodyParser.json());
 
-/* This get request is a PubSub alternative, 
-send the populated metadata variable as a response */
-app.get("/startData", async(req, res) =>{
+
+app.get("/", (req, res) => {
+  // console.log("request received");
+  res.send("Hello, World!"); // Add a response to send back to the client
+});
+
+
+ app.get("/startData", async(req, res) =>{
   await fetchStartData();
   if(startData){
     res.send(startData);
@@ -63,7 +85,7 @@ app.get("/initialBuffer", async(req, res) =>{
 
 // REDIS STUFF
 const redisPass = "cmuludolab";
-const redisURI = "3.130.126.51";
+const redisURI = "3.133.190.16";
 const redisPort = 6379;
 let isRedisConnected = false;
 var client;
