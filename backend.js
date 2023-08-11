@@ -44,7 +44,7 @@ app.use(bodyParser.json());
 
 
 app.get("/", (req, res) => {
-  console.log("request received");
+  // console.log("request received");
   res.send("Hello, World!"); // Add a response to send back to the client
 });
 
@@ -85,7 +85,7 @@ app.get("/initialBuffer", async(req, res) =>{
 
 // REDIS STUFF
 const redisPass = "cmuludolab";
-const redisURI = "3.130.126.51"; // replace with correct IP from AWS server
+const redisURI = "3.133.190.16";
 const redisPort = 6379;
 let isRedisConnected = false;
 var client;

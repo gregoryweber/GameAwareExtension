@@ -1,4 +1,4 @@
-import {startSvg, updateSvg} from './update_svg.js';
+import {startSvg, updateSvg, increaseFontSize, decreaseFontSize} from './update_svg.js';
 
 
 const twitch = window.Twitch.ext;
@@ -91,19 +91,18 @@ function syncBuffer(){
 
     
     actualKeyPointer = initialBuffer.length-1;
-    console.log('initialBuffer: ', initialBuffer[actualKeyPointer])
+    // console.log('initialBuffer: ', initialBuffer[actualKeyPointer])
     if (!initialBuffer[actualKeyPointer].tweens){
         console.log("Error: Tween object cannot be found");
     } else {
         for( let i = 0; i < initialBuffer[actualKeyPointer].tweens.length-1; i++){
-            console.log(`tween difference: ${actualTime} - ${initialBuffer[actualKeyPointer].tweens[i+1].game_time} = ${actualTime - initialBuffer[actualKeyPointer].tweens[i+1].game_time} `)
+            // console.log(`tween difference: ${actualTime} - ${initialBuffer[actualKeyPointer].tweens[i+1].game_time} = ${actualTime - initialBuffer[actualKeyPointer].tweens[i+1].game_time} `)
             if(actualTime - initialBuffer[actualKeyPointer].tweens[i+1].game_time < -target){
                 actualTweenPointer = i;
                 break;
             }
         }
     }
-
 
     
     initialBuffer.splice(0, initialBuffer.length-1);
@@ -131,7 +130,7 @@ function syncBuffer(){
     if (initialBuffer[keyFrameIndex].tweens) {
         updateWorldModelWithTween(initialBuffer[keyFrameIndex].tweens[tweenIndex]);
     }
-    updateSvg(worldModel, screen_width, screen_height);
+    updateSvg(worldModel, screen_width, screen_height, dialogArray, dialogArrayIndex);
 }
 
 var lastKeyTime;
@@ -168,11 +167,19 @@ function updateWorldModelWithTween(tweenFrame){
     worldModel["game_time"] = JSON.parse(JSON.stringify(tweenFrame["game_time"]));
     return true
 }
+let isLiveDialog = true;
+var dialogArray = [];
+var newDialog = "";
+var dialogArrayIndex = 0;
 
 
 function startGameLoop(){
-    startSvg();
+document.getElementById("dialogCheckbox").addEventListener("change", changeDialogSettings);
+document.getElementById("previous-dialog-button").addEventListener("click", previousDialogArray);
+document.getElementById("next-dialog-button").addEventListener("click", advanceDialogArray);
 
+    startSvg();
+   
 
     lastKeyTime = 0;
     lastTweenTime = 0;
@@ -192,26 +199,44 @@ var timeDiff = 0;
 
 function gameLoop(){
     nowTime = Date.now();
+    var bloomwoodCheckbox = document.querySelector('input[value="bloomwood"]');
+    var   isBloomwoodVisible = bloomwoodCheckbox.checked;
+    if (bloomwoodCheckbox.checked && forwardBuffer[keyFrameIndex]) {
+      isBloomwoodVisible = forwardBuffer[keyFrameIndex].key.visualNovelText != undefined
+    }
 
     if(nowTime - lastKeyTime >= timeToNextKey && forwardBuffer[keyFrameIndex]){
         keyFrameIndex = Math.max(0, forwardBuffer.length-2);
-        console.log(forwardBuffer[keyFrameIndex])
+        // console.log(forwardBuffer[keyFrameIndex])
         catchUpTime += nowTime-lastKeyTime-timeToNextKey;
 
         let dateNow = Date.now();
         let actualTime = dateNow - start_clock_secs - start_game_secs - (broadcastLatency * 1000);
-        console.log(`dateNow: ${dateNow}, start_clock_secs: ${start_clock_secs}, start_game_secs: ${start_game_secs}, broadcastLatency: ${broadcastLatency}, game_time: ${forwardBuffer[keyFrameIndex].game_time}`)
+        // console.log(`dateNow: ${dateNow}, start_clock_secs: ${start_clock_secs}, start_game_secs: ${start_game_secs}, broadcastLatency: ${broadcastLatency}, game_time: ${forwardBuffer[keyFrameIndex].game_time}`)
         timeDiff = actualTime - forwardBuffer[keyFrameIndex].game_time
-        console.log(`time difference [${keyFrameIndex}/${forwardBuffer.length-1}]: ${timeDiff}`);
+        // console.log(`time difference [${keyFrameIndex}/${forwardBuffer.length-1}]: ${timeDiff}`);
 
         
         tweenIndex = 0;
 
         updateWorldModelWithKey(forwardBuffer[keyFrameIndex]);
-        updateSvg(worldModel, screen_width, screen_height);
+        updateSvg(worldModel, screen_width, screen_height, dialogArray, dialogArrayIndex);
         lastKeyTime = nowTime;
         lastTweenTime = nowTime;
-        
+        if(forwardBuffer[keyFrameIndex]["key"]["visualNovelText"]){
+            if(!(forwardBuffer[keyFrameIndex]["key"]["visualNovelText"]["dialogFull"] === newDialog)){
+                newDialog = forwardBuffer[keyFrameIndex]["key"]["visualNovelText"]["dialogFull"].toString();
+
+                if(!(dialogArray.includes(newDialog))){
+                  dialogArray.push(newDialog);
+                 
+                  if(isLiveDialog){
+                    dialogArrayIndex = dialogArray.length -1;
+                  }
+                  dialogueNotification();
+                }    
+            }
+        }
         if (forwardBuffer[keyFrameIndex] && forwardBuffer[keyFrameIndex].tweens) {
             timeToNextTween = forwardBuffer[keyFrameIndex].tweens[0].game_time - forwardBuffer[keyFrameIndex].game_time - tweenOffset - catchUpTime;
           } else {
@@ -238,7 +263,7 @@ function gameLoop(){
 
         updateWorldModelWithTween(forwardBuffer[keyFrameIndex-1].tweens[tweenIndex]);
         lastTweenTime = nowTime;
-        updateSvg(worldModel, screen_width, screen_height);
+        updateSvg(worldModel, screen_width, screen_height, dialogArray, dialogArrayIndex);
         if(forwardBuffer[keyFrameIndex-1].tweens[tweenIndex+1]){
             timeToNextTween = forwardBuffer[keyFrameIndex-1].tweens[tweenIndex+1].game_time - forwardBuffer[keyFrameIndex-1].tweens[tweenIndex].game_time - tweenOffset - catchUpTime;
         }
@@ -248,5 +273,56 @@ function gameLoop(){
         tweenIndex++;
     }
     window.requestAnimationFrame(gameLoop);
-    
 }
+
+function advanceDialogArray(){
+  isLiveDialog = false;
+  console.log("changed dialogCheckbox in next dialog array");
+  document.getElementById("dialogCheckbox").checked = false;
+    if(dialogArrayIndex < dialogArray.length-1){
+        dialogArrayIndex++;
+        if (dialogArrayIndex == dialogArray.length -1) {
+          dialogueNotification();
+        }
+    }
+}
+
+function previousDialogArray(){
+    document.getElementById("dialogCheckbox").checked = false;
+    console.log("changed dialogCheckbox in previous dialog array");
+    isLiveDialog = false;
+    if(dialogArrayIndex > 0){
+        dialogArrayIndex--;
+    }
+}
+function changeDialogSettings(){
+  isLiveDialog = document.getElementById("dialogCheckbox").checked;
+  console.log("hello dialog settings are" + dialogArrayIndex);
+  if(isLiveDialog){
+    dialogArrayIndex = dialogArray.length-1;
+    dialogueNotification();
+  }
+}
+
+function dialogueNotification(){
+  let nextButton = document.getElementById("next-dialog-button")
+    if(dialogArrayIndex == dialogArray.length-1){
+      nextButton.style.backgroundColor = '#FFFFFF';
+    } else {
+      nextButton.style.backgroundColor = '#FF0000';
+    }
+}
+
+window.addEventListener('keydown', function (e) {
+  console.log(e.key)
+
+  function keyToFunction(key, func) {
+    if (e.key == key) {
+      func();
+    }
+  }
+  keyToFunction("-", decreaseFontSize) 
+  keyToFunction("=", increaseFontSize)
+  keyToFunction("ArrowLeft", previousDialogArray) 
+  keyToFunction("ArrowRight", advanceDialogArray)
+}, false);

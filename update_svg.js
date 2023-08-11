@@ -1,27 +1,38 @@
 var parentSvgDebug;
 var parentSvgMaze;
 var parentSvgTowerDefense;
+var parentSvgBloomwood;
 var svgDebugElements;
 var svgMazeElements;
 var svgTowerDefenseElements;
+var svgBloomwoodElements;
 
 var isDebugVisible = false;
 var isMazeVisible = false;
 var isTowerDefenseVisible = false;
+var isBloomwoodVisible = false;
 var currentEnemyArray = [];
 let globalWorldModel;
 function startSvg() {
     parentSvgDebug = document.getElementById("parent_svg_debug");
     parentSvgMaze = document.getElementById("parent_svg_maze");
     parentSvgTowerDefense = document.getElementById("parent_svg_tower_defense");
+    parentSvgBloomwood = document.getElementById("parent_svg_bloomwood");
     document.getElementById("debugCheckbox").addEventListener("change", changeOverlay);
     document.getElementById("mazeCheckbox").addEventListener("change", changeOverlay);
     document.getElementById("towerDefenseCheckbox").addEventListener("change", changeOverlay);
+    document.getElementById("bloomwoodCheckbox").addEventListener("change", changeOverlay);
+    document.getElementById("increase-font-size-button").addEventListener("click", increaseFontSize);
+    document.getElementById("decrease-font-size-button").addEventListener("click", decreaseFontSize);
+    document.getElementById("font-color-select").addEventListener("change", changeFontColor);
+    document.getElementById("font-type-select").addEventListener("change", changeFontType);
+    document.getElementById("language-select").addEventListener("change", changeLanguage);
 
 
     svgDebugElements = {};
     svgMazeElements = {};
     svgTowerDefenseElements = {};
+    svgBloomwoodElements = {};
 
 }
 
@@ -29,17 +40,19 @@ function changeOverlay(){
     const debugCheckbox = document.querySelector('input[value="debug"]');
     const mazeCheckbox = document.querySelector('input[value="maze"]');
     const towerDefenseCheckbox = document.querySelector('input[value="tower_defense"]');
+    const bloomwoodCheckbox = document.querySelector('input[value="bloomwood"]');
 
   
     // Toggle the visibility of all the selected overlays
     isDebugVisible = debugCheckbox.checked;
     isMazeVisible = mazeCheckbox.checked;  
     isTowerDefenseVisible = towerDefenseCheckbox.checked;  
+    isBloomwoodVisible = bloomwoodCheckbox.checked;
 
 }
 
 
-function updateSvg(worldModel, screen_width, screen_height){
+function updateSvg(worldModel, screen_width, screen_height, dialogArray, dialogArrayIndex){
     globalWorldModel = worldModel;
     if(isDebugVisible){
         document.getElementById("parent_svg_debug").style.visibility = "visible";
@@ -63,6 +76,20 @@ function updateSvg(worldModel, screen_width, screen_height){
     else{
         document.getElementById("parent_svg_tower_defense").style.visibility = "hidden";
         document.getElementById("upcoming_enemy_container").style.visibility = "hidden";
+    }
+    if (isBloomwoodVisible) {
+      document.getElementById("accessibility_container").style.visibility = "visible";
+      document.getElementById("parent_svg_bloomwood").style.visibility = "visible";
+      document.getElementById("dialog_browser_container").style.visibility = "visible";
+      document.getElementById("dialog_choices_container").style.visibility = "visible";
+      document.getElementById("dialog_choices_container2").style.visibility = "visible";
+      updateSVGBloomwoodElements(worldModel, screen_width, screen_height, dialogArray, dialogArrayIndex);
+    } else {
+      document.getElementById("accessibility_container").style.visibility = "hidden";
+      document.getElementById("parent_svg_bloomwood").style.visibility = "hidden";
+      document.getElementById("dialog_browser_container").style.visibility = "hidden";
+      document.getElementById("dialog_choices_container").style.visibility = "hidden";
+      document.getElementById("dialog_choices_container2").style.visibility = "hidden";
     }
 }
 
@@ -202,6 +229,249 @@ function updateSvgDebug(worldModel, screen_width, screen_height){
     
 
 }
+
+function updateSVGBloomwoodElements(worldModel, screen_width, screen_height, dialogArray, dialogArrayIndex) {
+  let xOffset = 0;
+  let yOffset = 0;
+  let width = 0;
+  let height = 0;
+  Object.entries(worldModel["key"]).forEach(([key, value]) => { // idk why you need a for each loop here when only visualNovelText object is needed
+    if (key.includes("visualNovelText") && value["screenRect"] != null) { // could just do this: let value = worldModel["key"]["visualNovelText"]; let key = "visualNovelText"
+      xOffset = (value["screenRect"].x / screen_width) * 100 - 0.5;
+      yOffset = (value["screenRect"].y / screen_height) * 100;
+      width = (value["screenRect"].w / screen_width) * 100;
+      height = (value["screenRect"].h / screen_height) * 100;      
+      var dialogContainer = document.getElementById("dialog_container");
+      dialogContainer.setAttribute("width", width.toString() + "%");
+      dialogContainer.setAttribute("height", height.toString() + "%");
+      dialogContainer.setAttribute("x", xOffset.toString() + "%");
+      dialogContainer.setAttribute("y", yOffset.toString() + "%");
+      var choicesContainer = document.getElementById("choice1_container")
+      choicesContainer.setAttribute("width", (width/4.8).toString() + "%");
+      choicesContainer.setAttribute("height", (height).toString() + "%");
+      choicesContainer.setAttribute("x", (xOffset+width/4.2).toString() + "%");
+      choicesContainer.setAttribute("y", (yOffset+height/1.2).toString() + "%");
+
+      var choicesContainer2 = document.getElementById("choice2_container")
+      choicesContainer2.setAttribute("width", (width/4.8).toString() + "%");
+      choicesContainer2.setAttribute("height", (height).toString() + "%");
+      choicesContainer2.setAttribute("x", (xOffset+width/2.1).toString() + "%");
+      choicesContainer2.setAttribute("y", (yOffset+height/1.2).toString() + "%");
+      
+      var previousButton = document.getElementById("previous-dialog-button");
+      var nextButton = document.getElementById("next-dialog-button");
+      nextButton.style.position = "absolute";
+      nextButton.style.top = yOffset + height / 2 + "%";
+      nextButton.style.left = xOffset + width + "%";
+      var previousButtonPercent = (previousButton.clientWidth / previousButton.parentElement.clientWidth) * 100;
+      previousButton.style.position = "absolute";
+      previousButton.style.top = yOffset + height / 2 + "%";
+      previousButton.style.left = xOffset - (previousButtonPercent + (previousButtonPercent * 0.1)) + "%";
+    
+      var svgRectDialogue = svgBloomwoodElements[key];
+      if (svgRectDialogue) {
+        var textContainer = dialogContainer.getElementById(key + "-text");
+        var dialogueText = textContainer.querySelector("#" + key + "-text-container");
+        translateText(dialogArray[dialogArrayIndex], langTarget)
+        .then((translatedText) => {
+          dialogueText.innerHTML = translatedText;
+        })
+        .catch((error) => {
+          console.error(error);
+        });
+        dialogueText.style.fontSize = 12 + fontSizeChange + "px";
+        dialogueText.style.color = fontColor.toString();
+        dialogueText.style.fontFamily = fontType.toString();
+
+        if (value["currentChoices"] && value["currentChoices"][0]) {
+          document.getElementById("dialog_choices_container").style.visibility = "visible";
+          var textContainerChoice = choicesContainer.getElementById(key + "-text-choice");
+          if (textContainerChoice) {
+            var choiceText = textContainerChoice.querySelector("#" + key + "Choice-text-container");
+            translateText(value["currentChoices"][0], langTarget)
+            .then((translatedText) => {
+              choiceText.innerHTML = translatedText;
+            })
+            .catch((error) => {
+              console.error(error);
+            });
+            choiceText.style.fontSize = 12 + fontSizeChange + "px";
+            choiceText.style.color = fontColor.toString();
+            choiceText.style.fontFamily = fontType.toString();
+          }
+        } else {
+          document.getElementById("dialog_choices_container").style.visibility = "hidden";
+        }
+
+        if (value["currentChoices"] && value["currentChoices"][1]) {
+          document.getElementById("dialog_choices_container2").style.visibility = "visible";
+          var textContainerChoice2 = choicesContainer2.getElementById(key + "-text-choice2")
+          if (textContainerChoice2) {
+            var choiceText2 = textContainerChoice2.querySelector("#" + key + "Choice-text-container2");
+            translateText(value["currentChoices"][1], langTarget)
+            .then((translatedText) => {
+              choiceText2.innerHTML = translatedText;
+            })
+            .catch((error) => {
+              console.error(error);
+            });
+            choiceText2.style.fontSize = 12 + fontSizeChange + "px";
+            choiceText2.style.color = fontColor.toString();
+            choiceText2.style.fontFamily = fontType.toString();
+          }
+        } else {
+          document.getElementById("dialog_choices_container2").style.visibility = "hidden";
+        }
+      } else {
+        svgRectDialogue = document.createElementNS("http://www.w3.org/2000/svg","rect");
+        svgRectDialogue.setAttribute("id", key);
+        svgRectDialogue.setAttribute("width", "100%");
+        svgRectDialogue.setAttribute("height", "100%");
+        svgRectDialogue.setAttribute("x", "0%");
+        svgRectDialogue.setAttribute("y", "0%");
+        svgRectDialogue.setAttribute("fill", "white");
+
+        var textContainer = document.createElementNS("http://www.w3.org/2000/svg","foreignObject");
+        textContainer.setAttribute("id", key + "-text");
+        textContainer.setAttribute("width", "100%");
+        textContainer.setAttribute("height", "100%");
+        textContainer.setAttribute("x", "1px");
+        textContainer.setAttribute("y", "1px");
+        textContainer.innerHTML = `<div style="width:100%; height:100%;"><div id="${key}-text-container" style="width:100%; height:100%; font-size:12px; color:red; overflow-wrap: break-word; overflow:auto;"></div></div>`;
+
+        var dialogueText = textContainer.querySelector("#" + key + "-text-container");
+        dialogueText.innerHTML = dialogArray[dialogArrayIndex];
+        dialogueText.style.fontSize = 12 + fontSizeChange + "px";
+        dialogueText.style.color = fontColor.toString();
+        dialogueText.style.fontFamily = fontType.toString();
+
+        if (value["currentChoices"] && value["currentChoices"][0]) {
+          document.getElementById("dialog_choices_container").style.visibility = "visible";
+
+          var svgRectChoice = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+          svgRectChoice.setAttribute("id", key + "choice");
+          svgRectChoice.setAttribute("width", "100%");
+          svgRectChoice.setAttribute("height", "100%");
+          svgRectChoice.setAttribute("x", "0%");
+          svgRectChoice.setAttribute("y", "0%");
+          svgRectChoice.setAttribute("fill", "aquamarine");
+
+          var textContainerChoice = document.createElementNS("http://www.w3.org/2000/svg","foreignObject");
+          textContainerChoice.setAttribute("id", key + "-text-choice");
+          textContainerChoice.setAttribute("width", "100%");
+          textContainerChoice.setAttribute("height", "100%");
+          textContainerChoice.setAttribute("x", "1px");
+          textContainerChoice.setAttribute("y", "1px");
+          textContainerChoice.innerHTML = `<div style="width:100%; height:100%;"><div id="${key}Choice-text-container" style="width:100%; height:100%; font-size:12px; color:red; overflow-wrap: break-word; overflow:auto;">${value["currentChoices"][0]}</div></div>`;
+
+          var choiceText = textContainerChoice.querySelector("#" + key + "Choice-text-container");
+          choiceText.innerHTML = value["currentChoices"][0];
+          choiceText.style.fontSize = 12 + fontSizeChange + "px";
+          choiceText.style.color = fontColor.toString();
+          choiceText.style.fontFamily = fontType.toString();
+
+          choicesContainer.appendChild(svgRectChoice)
+          choicesContainer.appendChild(textContainerChoice)
+        } else {
+          document.getElementById("dialog_choices_container").style.visibility = "hidden";
+        }
+
+        if (value["currentChoices"] && value["currentChoices"][1]) {
+          document.getElementById("dialog_choices_container2").style.visibility = "visible";
+
+          var svgRectChoice2 = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+          svgRectChoice2.setAttribute("id", key + "choice2");
+          svgRectChoice2.setAttribute("width", "100%");
+          svgRectChoice2.setAttribute("height", "100%");
+          svgRectChoice2.setAttribute("x", "0%");
+          svgRectChoice2.setAttribute("y", "0%");
+          svgRectChoice2.setAttribute("fill", "aquamarine");
+
+          var textContainerChoice2 = document.createElementNS("http://www.w3.org/2000/svg","foreignObject");
+          textContainerChoice2.setAttribute("id", key + "-text-choice2");
+          textContainerChoice2.setAttribute("width", "100%");
+          textContainerChoice2.setAttribute("height", "100%");
+          textContainerChoice2.setAttribute("x", "1px");
+          textContainerChoice2.setAttribute("y", "1px");
+          textContainerChoice2.innerHTML = `<div style="width:100%; height:100%;"><div id="${key}Choice-text-container2" style="width:100%; height:100%; font-size:12px; color:red; overflow-wrap: break-word; overflow:auto;">${value["currentChoices"][1]}</div></div>`;
+
+          var choiceText2 = textContainerChoice2.querySelector("#" + key + "Choice-text-container2");
+          choiceText2.innerHTML = value["currentChoices"][1];
+          choiceText2.style.fontSize = 12 + fontSizeChange + "px";
+          choiceText2.style.color = fontColor.toString();
+          choiceText2.style.fontFamily = fontType.toString();
+
+          choicesContainer2.appendChild(svgRectChoice2)
+          choicesContainer2.appendChild(textContainerChoice2)
+        } else {
+          document.getElementById("dialog_choices_container2").style.visibility = "hidden";
+        }
+
+        dialogContainer.appendChild(svgRectDialogue);
+        dialogContainer.appendChild(textContainer);
+        svgBloomwoodElements[key] = svgRectDialogue;
+        
+        
+    }
+
+    }
+  });
+}
+
+var fontSizeChange = 0;
+function increaseFontSize() {
+  console.log("increase font size");
+    if(fontSizeChange <= 50){
+        fontSizeChange +=2;
+    }
+  }
+  
+function decreaseFontSize() {
+  console.log("decrease font size");
+    if(fontSizeChange >= 0){
+        fontSizeChange-=2;
+    }
+}
+
+var fontColor = "black";
+function changeFontColor() {
+  console.log("change font color")
+    var fontColorSelect = document.getElementById("font-color-select");
+    fontColor = fontColorSelect.value;
+  }
+  
+var fontType = "Arial";
+function changeFontType() {
+  console.log("change font type");
+    var fontTypeSelect = document.getElementById("font-type-select");
+    fontType = fontTypeSelect.value;
+    
+}
+
+function translateText(text, target) {
+  const source = 'en';
+  const encodedText = encodeURIComponent(text);
+  const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=${source}&tl=${target}&dt=t&ie=UTF-8&oe=UTF-8&otf=2&q=${encodedText}`;
+
+  return fetch(url)
+    .then(response => response.json())
+    .then(result => {
+      let translatedText = '';
+      for (let i = 0; i < result[0].length; i++) {
+        translatedText += result[0][i][0];
+      }
+      return translatedText.trim();
+    })
+    .catch(error => console.error(error));
+}
+
+var langTarget = "en";
+function changeLanguage(){
+  console.log("change language");
+  var languageSelect = document.getElementById("language-select");
+  langTarget = languageSelect.value;
+}
+
 
 function getRandomColor() {
     const colors = ['#e6194b', '#3cb44b', '#ffe119', '#0082c8', '#f58231', '#911eb4'];
@@ -693,4 +963,4 @@ function createLineTowerDefense(x1,y1,x2,y2,color,key){
   
     return svgLine;
 }
-export { startSvg, updateSvg};
+export { startSvg, updateSvg, increaseFontSize, decreaseFontSize};
