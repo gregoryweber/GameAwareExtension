@@ -206,7 +206,7 @@ function gameLoop(){
     nowTime = Date.now();
     var bloomwoodCheckbox = document.querySelector('input[value="bloomwood"]');
     var   isBloomwoodVisible = bloomwoodCheckbox.checked;
-    if (bloomwoodCheckbox.checked && forwardBuffer[keyFrameIndex]) {
+    if (forwardBuffer[keyFrameIndex]) {
       isBloomwoodVisible = forwardBuffer[keyFrameIndex].key.visualNovelText != undefined
     }
 
@@ -229,18 +229,16 @@ function gameLoop(){
         lastKeyTime = nowTime;
         lastTweenTime = nowTime;
         if(forwardBuffer[keyFrameIndex]["key"]["visualNovelText"]){
-            if(!(forwardBuffer[keyFrameIndex]["key"]["visualNovelText"]["dialogFull"] === newDialog)){
-                newDialog = forwardBuffer[keyFrameIndex]["key"]["visualNovelText"]["dialogFull"].toString();
+            newDialog = forwardBuffer[keyFrameIndex]["key"]["visualNovelText"]["dialogFull"].toString();
 
-                if(!(dialogArray.includes(newDialog))){
-                  dialogArray.push(newDialog);
-                 
-                  if(isLiveDialog){
-                    dialogArrayIndex = dialogArray.length -1;
-                  }
-                  dialogueNotification();
-                }    
-            }
+            if(!(dialogArray.includes(newDialog))){
+                dialogArray.push(newDialog);
+                
+                if(isLiveDialog){
+                dialogArrayIndex = dialogArray.length -1;
+                }
+                dialogueNotification();
+            }    
         }
         if (forwardBuffer[keyFrameIndex] && forwardBuffer[keyFrameIndex].tweens) {
             timeToNextTween = forwardBuffer[keyFrameIndex].tweens[0].game_time - forwardBuffer[keyFrameIndex].game_time - tweenOffset - catchUpTime;
