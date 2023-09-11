@@ -39,17 +39,19 @@
         <button id="previous-dialog-button">&#x25C0;</button>
         <button id="next-dialog-button">&#x25B6;</button>
       </div>
-      <div class="extension-options">
-        <label>
-          <input type="checkbox" name="overlay" value="debug" id="debugCheckbox"> Debug Overlay
-        </label>
-        <label>
+      <div class="extension-options" style="visibility: hidden;">
+        <label style="visibility: hidden;">
           <input type="checkbox" name="overlay" value="bloomwood" id="bloomwoodCheckbox"> Bloomwood Overlay
         </label>
+        <label style="visibility: hidden;">
+          <input type="checkbox" name="overlay" value="debug" id="debugCheckbox"> Debug Overlay
+        </label>
+
+        <label style="visibility: hidden;">
           <input type="checkbox" name="overlay" value="maze" id="mazeCheckbox"> Maze Overlay
         </label>
-        <label>
-          <input type="checkbox" name="overlay" value="tower_defense" id="towerDefenseCheckbox"> Tower Defense Overlay
+        <label style="visibility: hidden;">
+          <input  type="checkbox" name="overlay" value="tower_defense" id="towerDefenseCheckbox"> Tower Defense Overlay
         </label>
       </div>
       <div id="accessibility_container">

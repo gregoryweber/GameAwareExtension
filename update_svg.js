@@ -79,7 +79,7 @@ function updateSvg(worldModel, screen_width, screen_height, dialogArray, dialogA
         document.getElementById("parent_svg_tower_defense").style.visibility = "hidden";
         document.getElementById("upcoming_enemy_container").style.visibility = "hidden";
     }
-    if (isBloomwoodVisible) {
+    if (true) {
       document.getElementById("accessibility_container").style.visibility = "visible";
       document.getElementById("parent_svg_bloomwood").style.visibility = "visible";
       document.getElementById("dialog_browser_container").style.visibility = "visible";
