@@ -19,7 +19,8 @@
 }
 
 .extension-options {
-  /* position: fixed; */ /* Remove this line */
+  position: relative;
+  z-index: 1000;
   top: 0;
   left: 0;
   right: 0;
@@ -40,6 +41,14 @@ svg {
 
 svg svg {
   position: absolute;
+}
+#upcoming_enemy_container {
+  position: absolute;
+  top: 12%;
+  right: 0;
+  width: 20%;
+  height: 65%;
+  visibility: hidden;
 }
 
 #accessibility_container {

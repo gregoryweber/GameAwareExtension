@@ -29,13 +29,11 @@
       </svg>
       <svg id = "dialog_choices_container">
         <svg id="choice1_container">
-
         </svg>
       </svg>
       <svg id = "dialog_choices_container2">
         <svg id="choice2_container">
-
-        </svg>
+      </svg>
       </svg>
       <div id = "dialog_browser_container">
         <button id="previous-dialog-button">&#x25C0;</button>
@@ -83,6 +81,14 @@
               <input id ="dialogCheckbox" type="checkbox" checked="true" name="dialog" value="live"> Enabled Live Dialogue
             </label>        
         </div>
-      </div>      
+      </div>   
+      <div id="targetSetting" class="container" style="visibility: hidden;">
+        <h3>Sync Target: <span id="target">0</span></h3>
+        <button id = "plus">+</button>
+        <button id = "minus">-</button>
+        <label>
+          <input id="debugBoxesCheckbox" type="checkbox" checked="true" name="boxes" value="colored"> Enable Visible Screen Rects
+        </label>
+      </div>
     </body>
 </html>

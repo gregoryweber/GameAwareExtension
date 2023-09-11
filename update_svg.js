@@ -56,10 +56,12 @@ function updateSvg(worldModel, screen_width, screen_height, dialogArray, dialogA
     globalWorldModel = worldModel;
     if(isDebugVisible){
         document.getElementById("parent_svg_debug").style.visibility = "visible";
+        document.getElementById("targetSetting").style.visibility = "visible";
         updateSvgDebug(worldModel, screen_width, screen_height);
     }
     else{
         document.getElementById("parent_svg_debug").style.visibility = "hidden";
+        document.getElementById("targetSetting").style.visibility = "hidden";
     }
     if(isMazeVisible){
         document.getElementById("parent_svg_maze").style.visibility = "visible";
@@ -152,7 +154,11 @@ function updateSvgDebug(worldModel, screen_width, screen_height){
             svgRect.setAttribute("x", xOffset.toString()+"%");
             svgRect.setAttribute("y", yOffset.toString()+"%");
             svgRect.setAttribute("fill", "none");
-            // svgRect.setAttribute("stroke", "red");
+            svgRect.setAttribute("class", "debugTooltip");
+            let screenRectVisibleCheckbox = document.querySelector('input[value="colored"]');
+            if (screenRectVisibleCheckbox.checked){
+              svgRect.setAttribute("stroke", "red");
+            }
             svgRect.setAttribute("stroke-width", "2");
             svgRect.setAttribute("position", "absolute");
             svgRect.style.pointerEvents = "all"; // prevent stroke from triggering mouse events    
