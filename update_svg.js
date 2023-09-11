@@ -82,9 +82,9 @@ function updateSvg(worldModel, screen_width, screen_height, dialogArray, dialogA
     if (true) {
       document.getElementById("accessibility_container").style.visibility = "visible";
       document.getElementById("parent_svg_bloomwood").style.visibility = "visible";
-      document.getElementById("dialog_browser_container").style.visibility = "visible";
-      document.getElementById("dialog_choices_container").style.visibility = "visible";
-      document.getElementById("dialog_choices_container2").style.visibility = "visible";
+      // document.getElementById("dialog_browser_container").style.visibility = "visible";
+      // document.getElementById("dialog_choices_container").style.visibility = "visible";
+      // document.getElementById("dialog_choices_container2").style.visibility = "visible";
       updateSVGBloomwoodElements(worldModel, screen_width, screen_height, dialogArray, dialogArrayIndex);
     } else {
       document.getElementById("accessibility_container").style.visibility = "hidden";
@@ -241,8 +241,8 @@ function updateSVGBloomwoodElements(worldModel, screen_width, screen_height, dia
   let yOffset = 0;
   let width = 0;
   let height = 0;
-  Object.entries(worldModel["key"]).forEach(([key, value]) => { // idk why you need a for each loop here when only visualNovelText object is needed
-    if (key.includes("visualNovelText") && value["screenRect"] != null) { // could just do this: let value = worldModel["key"]["visualNovelText"]; let key = "visualNovelText"
+  let value = worldModel["key"]["visualNovelText"];
+  let key = "visualNovelText"; // could just do this: let value = worldModel["key"]["visualNovelText"]; let key = "visualNovelText"
       xOffset = (value["screenRect"].x / screen_width) * 100 - 0.5;
       yOffset = (value["screenRect"].y / screen_height) * 100;
       width = (value["screenRect"].w / screen_width) * 100;
@@ -290,7 +290,6 @@ function updateSVGBloomwoodElements(worldModel, screen_width, screen_height, dia
         dialogueText.style.fontFamily = fontType.toString();
 
         if (value["currentChoices"] && value["currentChoices"][0]) {
-          document.getElementById("dialog_choices_container").style.visibility = "visible";
           var textContainerChoice = choicesContainer.getElementById(key + "-text-choice");
           if (textContainerChoice) {
             var choiceText = textContainerChoice.querySelector("#" + key + "Choice-text-container");
@@ -305,12 +304,8 @@ function updateSVGBloomwoodElements(worldModel, screen_width, screen_height, dia
             choiceText.style.color = fontColor.toString();
             choiceText.style.fontFamily = fontType.toString();
           }
-        } else {
-          document.getElementById("dialog_choices_container").style.visibility = "hidden";
-        }
-
+        } 
         if (value["currentChoices"] && value["currentChoices"][1]) {
-          document.getElementById("dialog_choices_container2").style.visibility = "visible";
           var textContainerChoice2 = choicesContainer2.getElementById(key + "-text-choice2")
           if (textContainerChoice2) {
             var choiceText2 = textContainerChoice2.querySelector("#" + key + "Choice-text-container2");
@@ -325,9 +320,7 @@ function updateSVGBloomwoodElements(worldModel, screen_width, screen_height, dia
             choiceText2.style.color = fontColor.toString();
             choiceText2.style.fontFamily = fontType.toString();
           }
-        } else {
-          document.getElementById("dialog_choices_container2").style.visibility = "hidden";
-        }
+      } 
       } else {
         svgRectDialogue = document.createElementNS("http://www.w3.org/2000/svg","rect");
         svgRectDialogue.setAttribute("id", key);
@@ -352,7 +345,6 @@ function updateSVGBloomwoodElements(worldModel, screen_width, screen_height, dia
         dialogueText.style.fontFamily = fontType.toString();
 
         if (value["currentChoices"] && value["currentChoices"][0]) {
-          document.getElementById("dialog_choices_container").style.visibility = "visible";
 
           var svgRectChoice = document.createElementNS("http://www.w3.org/2000/svg", "rect");
           svgRectChoice.setAttribute("id", key + "choice");
@@ -378,12 +370,9 @@ function updateSVGBloomwoodElements(worldModel, screen_width, screen_height, dia
 
           choicesContainer.appendChild(svgRectChoice)
           choicesContainer.appendChild(textContainerChoice)
-        } else {
-          document.getElementById("dialog_choices_container").style.visibility = "hidden";
-        }
+        } 
 
         if (value["currentChoices"] && value["currentChoices"][1]) {
-          document.getElementById("dialog_choices_container2").style.visibility = "visible";
 
           var svgRectChoice2 = document.createElementNS("http://www.w3.org/2000/svg", "rect");
           svgRectChoice2.setAttribute("id", key + "choice2");
@@ -409,19 +398,12 @@ function updateSVGBloomwoodElements(worldModel, screen_width, screen_height, dia
 
           choicesContainer2.appendChild(svgRectChoice2)
           choicesContainer2.appendChild(textContainerChoice2)
-        } else {
-          document.getElementById("dialog_choices_container2").style.visibility = "hidden";
         }
 
         dialogContainer.appendChild(svgRectDialogue);
         dialogContainer.appendChild(textContainer);
         svgBloomwoodElements[key] = svgRectDialogue;
-        
-        
     }
-
-    }
-  });
 }
 
 var fontSizeChange = 0;
