@@ -133,7 +133,7 @@ function syncBuffer(){
     if (initialBuffer[keyFrameIndex].tweens) {
         updateWorldModelWithTween(initialBuffer[keyFrameIndex].tweens[tweenIndex]);
     }
-    updateSvg(worldModel, screen_width, screen_height, dialogArray, dialogArrayIndex);
+    updateSvg(worldModel, screen_width, screen_height);
 }
 
 var lastKeyTime;
@@ -170,16 +170,9 @@ function updateWorldModelWithTween(tweenFrame){
     worldModel["game_time"] = JSON.parse(JSON.stringify(tweenFrame["game_time"]));
     return true
 }
-let isLiveDialog = true;
-var dialogArray = [];
-var newDialog = "";
-var dialogArrayIndex = 0;
 
 
 function startGameLoop(){
-    document.getElementById("dialogCheckbox").addEventListener("change", changeDialogSettings);
-    document.getElementById("previous-dialog-button").addEventListener("click", previousDialogArray);
-    document.getElementById("next-dialog-button").addEventListener("click", advanceDialogArray);
     document.getElementById("target").innerHTML = target;
     document.getElementById("plus").addEventListener("click", incrementTargetOffset);
     document.getElementById("minus").addEventListener("click", decrementTargetOffset);
@@ -204,11 +197,7 @@ var timeDiff = 0;
 
 function gameLoop(){
     nowTime = Date.now();
-    var bloomwoodCheckbox = document.querySelector('input[value="bloomwood"]');
-    var   isBloomwoodVisible = bloomwoodCheckbox.checked;
-    if (forwardBuffer[keyFrameIndex]) {
-      isBloomwoodVisible = forwardBuffer[keyFrameIndex].key.visualNovelText != undefined
-    }
+
 
     if(nowTime - lastKeyTime >= timeToNextKey && forwardBuffer[keyFrameIndex]){
         keyFrameIndex = Math.max(0, forwardBuffer.length-2);
@@ -225,21 +214,10 @@ function gameLoop(){
         tweenIndex = 0;
 
         updateWorldModelWithKey(forwardBuffer[keyFrameIndex]);
-        updateSvg(worldModel, screen_width, screen_height, dialogArray, dialogArrayIndex);
+        updateSvg(worldModel, screen_width, screen_height);
         lastKeyTime = nowTime;
         lastTweenTime = nowTime;
-        if(forwardBuffer[keyFrameIndex]["key"]["visualNovelText"]){
-            newDialog = forwardBuffer[keyFrameIndex]["key"]["visualNovelText"]["dialogFull"].toString();
-
-            if(!(dialogArray.includes(newDialog))){
-                dialogArray.push(newDialog);
-                
-                if(isLiveDialog){
-                dialogArrayIndex = dialogArray.length -1;
-                }
-                dialogueNotification();
-            }    
-        }
+ 
         if (forwardBuffer[keyFrameIndex] && forwardBuffer[keyFrameIndex].tweens) {
             timeToNextTween = forwardBuffer[keyFrameIndex].tweens[0].game_time - forwardBuffer[keyFrameIndex].game_time - tweenOffset - catchUpTime;
           } else {
@@ -258,7 +236,7 @@ function gameLoop(){
         } else {
             keyFrameIndex++;
         }
-
+          
     }
     //console.log(`tween ${tweenIndex}: ${nowTime-lastTweenTime} >= ${timeToNextTween}`);
     if (nowTime - lastTweenTime >= timeToNextTween && forwardBuffer[keyFrameIndex-1] && forwardBuffer[keyFrameIndex-1].tweens && tweenIndex < tween_rate){
@@ -266,7 +244,7 @@ function gameLoop(){
 
         updateWorldModelWithTween(forwardBuffer[keyFrameIndex-1].tweens[tweenIndex]);
         lastTweenTime = nowTime;
-        updateSvg(worldModel, screen_width, screen_height, dialogArray, dialogArrayIndex);
+        updateSvg(worldModel, screen_width, screen_height);
         if(forwardBuffer[keyFrameIndex-1].tweens[tweenIndex+1]){
             timeToNextTween = forwardBuffer[keyFrameIndex-1].tweens[tweenIndex+1].game_time - forwardBuffer[keyFrameIndex-1].tweens[tweenIndex].game_time - tweenOffset - catchUpTime;
         }
@@ -277,58 +255,6 @@ function gameLoop(){
     }
     window.requestAnimationFrame(gameLoop);
 }
-
-function advanceDialogArray(){
-  isLiveDialog = false;
-  console.log("changed dialogCheckbox in next dialog array");
-  document.getElementById("dialogCheckbox").checked = false;
-    if(dialogArrayIndex < dialogArray.length-1){
-        dialogArrayIndex++;
-        if (dialogArrayIndex == dialogArray.length -1) {
-          dialogueNotification();
-        }
-    }
-}
-
-function previousDialogArray(){
-    document.getElementById("dialogCheckbox").checked = false;
-    console.log("changed dialogCheckbox in previous dialog array");
-    isLiveDialog = false;
-    if(dialogArrayIndex > 0){
-        dialogArrayIndex--;
-    }
-}
-function changeDialogSettings(){
-  isLiveDialog = document.getElementById("dialogCheckbox").checked;
-  console.log("hello dialog settings are" + dialogArrayIndex);
-  if(isLiveDialog){
-    dialogArrayIndex = dialogArray.length-1;
-    dialogueNotification();
-  }
-}
-
-function dialogueNotification(){
-  let nextButton = document.getElementById("next-dialog-button")
-    if(dialogArrayIndex == dialogArray.length-1){
-      nextButton.style.backgroundColor = '#FFFFFF';
-    } else {
-      nextButton.style.backgroundColor = '#FF0000';
-    }
-}
-
-window.addEventListener('keydown', function (e) {
-  console.log(e.key)
-
-  function keyToFunction(key, func) {
-    if (e.key == key) {
-      func();
-    }
-  }
-  keyToFunction("-", decreaseFontSize) 
-  keyToFunction("=", increaseFontSize)
-  keyToFunction("ArrowLeft", previousDialogArray) 
-  keyToFunction("ArrowRight", advanceDialogArray)
-}, false);
 
 function incrementTargetOffset(){
     target+=5;

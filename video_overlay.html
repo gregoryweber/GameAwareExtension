@@ -24,7 +24,7 @@
         <rect id="upcoming_enemy_rect" x="0" y="0" width="100%" height="100%" fill="rgb(40,40,40)" stroke="darkgray" stroke-width="5"></rect>
       </svg>
       <svg id = "parent_svg_bloomwood">
-        <svg id = "dialog_container">
+        <svg id = "dialogue_container">
         </svg>
         <svg id="choice1_container">
         </svg>
@@ -46,11 +46,11 @@
           <input  type="checkbox" name="overlay" value="tower_defense" id="towerDefenseCheckbox"> Tower Defense Overlay
         </label>
       </div>
+      <div id = "dialog_browser_container">
+        <button id="previous-dialogue-button">&#x25C0;</button>
+        <button id="next-dialogue-button">&#x25B6;</button>
+      </div>
       <div id="accessibility_container">
-        <div id = "dialog_browser_container">
-          <button id="previous-dialog-button">&#x25C0;</button>
-          <button id="next-dialog-button">&#x25B6;</button>
-        </div>
         <div id="accessibility_buttons">
           <button id="increase-font-size-button">Font Size (+)</button>
           <button id="decrease-font-size-button">Font Size (-)</button>
@@ -69,12 +69,12 @@
               <option value="Tahoma">Tahoma</option>
               <option value="OpenDyslexic">OpenDyslexic</option>
             </select>
-            <label for="language-select">Language:</label>
+            <!-- <label for="language-select">Language:</label>
             <select id="language-select">
               <option value="en">English</option>
               <option value="fr">French</option>
               <option value="es">Spanish</option>
-            </select>
+            </select> -->
             <label>
               <input id ="dialogCheckbox" type="checkbox" checked="true" name="dialog" value="live"> Enabled Live Dialogue
             </label>        
