@@ -8,7 +8,7 @@ let start_game_secs;
 let start_clock_secs;
 let tween_rate = 24;
 let key_rate = 1;
-let target = 50;
+let target = 180;
 let screen_width;
 let screen_height;
 let initialBuffer = [];

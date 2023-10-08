@@ -26,40 +26,43 @@
       <svg id = "parent_svg_bloomwood">
         <svg id = "dialogue_container">
         </svg>
-        <svg id="choice1_container">
+        <svg id="choices_container">
         </svg>
-        <svg id="choice2_container">
       </svg>
 
-      <div class="extension-options" style="visibility: hidden;">
-        <label style="visibility: hidden;">
+      <div class="extension-options">
+        <label>
           <input type="checkbox" name="overlay" value="bloomwood" id="bloomwoodCheckbox"> Bloomwood Overlay
         </label>
-        <label style="visibility: hidden;">
+        <label>
           <input type="checkbox" name="overlay" value="debug" id="debugCheckbox"> Debug Overlay
         </label>
 
-        <label style="visibility: hidden;">
+        <label>
           <input type="checkbox" name="overlay" value="maze" id="mazeCheckbox"> Maze Overlay
         </label>
-        <label style="visibility: hidden;">
+        <label>
           <input  type="checkbox" name="overlay" value="tower_defense" id="towerDefenseCheckbox"> Tower Defense Overlay
         </label>
       </div>
-      <div id = "dialog_browser_container">
-        <button id="previous-dialogue-button">&#x25C0;</button>
-        <button id="next-dialogue-button">&#x25B6;</button>
-      </div>
+      
       <div id="accessibility_container">
         <div id="accessibility_buttons">
+          <div id="dialogue-browsing-buttons">
+            <button id="previous-dialogue-button">&#x25C0;</button>
+            <button id="next-dialogue-button">&#x25B6;</button>  
+          </div>
           <button id="increase-font-size-button">Font Size (+)</button>
           <button id="decrease-font-size-button">Font Size (-)</button>
+          <div class="dropdowns">
             <label for="font-color-select">Font Color:</label>
             <select id="font-color-select">
               <option value="black">Black</option>
               <option value="red">Red</option>
               <option value="blue">Blue</option>
             </select>
+          </div>
+          <div class="dropdowns">
             <label for="font-type-select">Font Type:</label>
             <select id="font-type-select">
               <option value="Arial">Arial</option>
@@ -69,15 +72,20 @@
               <option value="Tahoma">Tahoma</option>
               <option value="OpenDyslexic">OpenDyslexic</option>
             </select>
-            <!-- <label for="language-select">Language:</label>
+          </div>
+          <div class="dropdowns">
+            <label for="language-select">Language:</label>
             <select id="language-select">
               <option value="en">English</option>
               <option value="fr">French</option>
               <option value="es">Spanish</option>
-            </select> -->
+            </select>
+          </div>
+          <div class="dropdowns">
             <label>
               <input id ="dialogCheckbox" type="checkbox" checked="true" name="dialog" value="live"> Enabled Live Dialogue
             </label>        
+          </div>
         </div>
       </div>   
       <div id="targetSetting" class="container" style="visibility: hidden;">

@@ -53,31 +53,27 @@ svg svg {
 
 #accessibility_container {
   position: absolute;
-  bottom: 0.1vh;
-  left: 0vw;
-  padding: 2%;
-  width:100vw;
+  top: 20vh;
+  left: 0.1vw; /* Adjust the left position as needed */
+  height: 70vh; /* Set the height to 100% of the viewport height */
+  width: 13vw;
   background-color: rgba(192, 192, 192, 0.5);
+  display: flex;
 }
+
 #accessibility_buttons {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 2%;
-  max-width: 90%;
+  flex-direction: column; /* Stack buttons vertically */
+  justify-content: space-between; /* Distribute buttons evenly */
 }
-#previous-dialog-button,
+
+/* #previous-dialog-button,
 #next-dialog-button {
   
   position: absolute;
-}
+} */
 
-@media screen and (max-width: 768px) {
-  #previous-dialog-button,
-  #next-dialog-button {
-    margin: 2px 0; /* Adjust the margin as needed for smaller screens */
-  }
-}
+
 
 /* Adjust font size and padding for better readability and appearance */
 #font_size,
@@ -87,24 +83,23 @@ svg svg {
 #decrease-font-size-button,
 #font-color-select,
 #font-type-select,
-#language-select,
-#dialogCheckbox {
+#language-select {
   font-size: 0.9vw;
   padding: 0.5em 1em;
   margin-right: 1vw;
+  width:100%
 }
 
 #plus_button,
 #minus_button {
-  font-size: 0.9vw;
+  font-size: 0.8vw;
   padding:0.5em 1em;
   margin: 0 0.5em;
-  /* padding: 5px; */
-  /* border-radius: 5px; */
+  padding: 5px;
+  border-radius: 5px;
   background-color: #ccc;
   cursor: pointer;
 }
-/* Your existing CSS styles above */
 
 #plus_button:hover,
 #minus_button:hover,
@@ -116,9 +111,19 @@ svg svg {
 #font-color-select {
   display: flex;
   align-items: center;
+  font-size: 0.8vw;
 }
 
 #font-type-select {
   display: flex;
   align-items: center;
+  font-size: 0.8vw;
+}
+#dialogue-browsing-buttons{
+  display: flex;
+  flex-direction: row;
+  /* justify-content: space-evenly; */
+}
+.dropdowns label{
+  background-color: darkgray;
 }
