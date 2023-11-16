@@ -19,6 +19,10 @@ let isLiveDialog = true;
 var dialogArray = [];
 var newDialog = "";
 var dialogArrayIndex = 0;
+
+let enableScreenRects = true; // Default value based on checkbox being initially checked
+
+
 function startSvg() {
     parentSvgDebug = document.getElementById("parent_svg_debug");
     parentSvgMaze = document.getElementById("parent_svg_maze");
@@ -38,7 +42,11 @@ function startSvg() {
     document.getElementById("previous-dialogue-button").addEventListener("click", previousDialogArray);
     document.getElementById("next-dialogue-button").addEventListener("click", advanceDialogArray);
 
-
+    const screenRectVisibleCheckbox = document.querySelector('input[value="colored"]');
+    // Add an event listener to the checkbox to update the boolean variable
+    screenRectVisibleCheckbox.addEventListener("change", function () {
+      enableScreenRects = screenRectVisibleCheckbox.checked;
+    });
     svgDebugElements = {};
     svgMazeElements = {};
     svgTowerDefenseElements = {};
@@ -156,6 +164,12 @@ function updateSvgDebug(worldModel, screen_width, screen_height){
             svgRect.setAttribute("height", height.toString()+"%");
             svgRect.setAttribute("x", xOffset.toString()+"%");
             svgRect.setAttribute("y", yOffset.toString()+"%");
+            if (enableScreenRects){
+              svgRect.setAttribute("stroke", "red");
+            }
+            else{
+              svgRect.removeAttribute("stroke");
+            }
         }
         else{
             svgRect = document.createElementNS(
@@ -169,9 +183,11 @@ function updateSvgDebug(worldModel, screen_width, screen_height){
             svgRect.setAttribute("y", yOffset.toString()+"%");
             svgRect.setAttribute("fill", "none");
             svgRect.setAttribute("class", "debugTooltip");
-            let screenRectVisibleCheckbox = document.querySelector('input[value="colored"]');
-            if (screenRectVisibleCheckbox.checked){
+            if (enableScreenRects){
               svgRect.setAttribute("stroke", "red");
+            }
+            else{
+              svgRect.removeAttribute("stroke");
             }
             svgRect.setAttribute("stroke-width", "2");
             svgRect.setAttribute("position", "absolute");
@@ -326,7 +342,7 @@ console.log(dialogArray[dialogArrayIndex]["currentChoices"])
   if(globalWorldModel["key"]["visualNovelText"] && dialogArray[dialogArrayIndex]){
     for(const [index, choice] of dialogArray[dialogArrayIndex]["currentChoices"].entries()){
         // Calculate choice dialogue rect values
-      xOffset = (choice["screenRect"].x / s_width) * 100 - 0.5;
+      xOffset = (choice["screenRect"].x / s_width) * 100;
       yOffset = (choice["screenRect"].y / s_height) * 100;
       width = (choice["screenRect"].w / s_width) * 100;
       height = (choice["screenRect"].h / s_height) * 100;

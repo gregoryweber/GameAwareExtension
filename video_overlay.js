@@ -8,7 +8,7 @@ let start_game_secs;
 let start_clock_secs;
 let tween_rate = 24;
 let key_rate = 1;
-let target = 180;
+let target = 25;
 let screen_width;
 let screen_height;
 let initialBuffer = [];
@@ -30,8 +30,8 @@ twitch.onAuthorized((auth) => {
 function getStartData(){
     $.ajax({
         type: 'GET',
-        // url: location.protocol + '//cmuctpawsec2.com/startData', // For remote, replace localhost with location.protocol + //cmuctpawsec2.com/startData
-        url: location.protocol + '//localhost:3000/startData', 
+        url: location.protocol + '//cmuctpawsec2.com/startData', // For remote, replace localhost with location.protocol + //cmuctpawsec2.com/startData
+        // url: location.protocol + '//localhost:3000/startData', 
         contentType: 'application/json',
         headers: { authorization: 'Bearer ' + window.Twitch.ext.viewer.sessionToken},
         success: function(res) {
@@ -50,8 +50,8 @@ function setUpInitialBuffer(){
     let backPadding = parseInt(broadcastLatency)*(2/key_rate); // pad an extra few seconds
     $.ajax({
         type: 'GET',
-        // url: location.protocol + '//cmuctpawsec2.com/initialBuffer?padding='+backPadding, // For remote, replace localhost with location.protocol +//cmuctpawsec2.com/initialBuffer?padding=
-        url: location.protocol + '//localhost:3000/initialBuffer?padding='+backPadding, // For remote, replace localhost with location.protocol +//cmuctpawsec2.com/initialBuffer?padding=
+        url: location.protocol + '//cmuctpawsec2.com/initialBuffer?padding='+backPadding, // For remote, replace localhost with location.protocol +//cmuctpawsec2.com/initialBuffer?padding=
+        // url: location.protocol + '//localhost:3000/initialBuffer?padding='+backPadding, // For remote, replace localhost with location.protocol +//cmuctpawsec2.com/initialBuffer?padding=
         async:true,
         contentType: 'application/json',
         headers: { authorization: 'Bearer ' + window.Twitch.ext.viewer.sessionToken},
@@ -68,8 +68,8 @@ function setUpInitialBuffer(){
 function getLatestData(){
       $.ajax({
           type: 'GET',
-        //   url: location.protocol + '//cmuctpawsec2.com/latestData', // For remote, replace localhost with location.protocol +//cmuctpawsec2.com/latestData
-          url: location.protocol + '//localhost:3000/latestData', // For remote, replace localhost with location.protocol +//cmuctpawsec2.com/latestData
+          url: location.protocol + '//cmuctpawsec2.com/latestData', // For remote, replace localhost with location.protocol +//cmuctpawsec2.com/latestData
+        //   url: location.protocol + '//localhost:3000/latestData', // For remote, replace localhost with location.protocol +//cmuctpawsec2.com/latestData
           headers: { authorization: 'Bearer ' + window.Twitch.ext.viewer.sessionToken},
           success: function(res) {        
             forwardBuffer.push(res);
@@ -133,7 +133,7 @@ function syncBuffer(){
     if (initialBuffer[keyFrameIndex].tweens) {
         updateWorldModelWithTween(initialBuffer[keyFrameIndex].tweens[tweenIndex]);
     }
-    updateSvg(worldModel, screen_width, screen_height);
+    // updateSvg(worldModel, screen_width, screen_height);
 }
 
 var lastKeyTime;
@@ -172,10 +172,36 @@ function updateWorldModelWithTween(tweenFrame){
 }
 
 
+
 function startGameLoop(){
-    document.getElementById("target").innerHTML = target;
-    document.getElementById("plus").addEventListener("click", incrementTargetOffset);
-    document.getElementById("minus").addEventListener("click", decrementTargetOffset);
+    // Get references to the input field and the target span
+    const targetInput = document.getElementById("targetInput");
+    const targetSpan = document.getElementById("target");
+    targetSpan.innerHTML = target;
+    targetInput.value = target;
+    // Add an event listener to the input field to listen for Enter key presses
+    targetInput.addEventListener("keydown", function (event) {
+        if (event.key === "Enter") {
+        // Get the user's input from the input field
+        const userInput = parseInt(targetInput.value);
+    
+        // Check if the user's input is a valid number
+        if (!isNaN(userInput)) {
+            // Update the target span with the user's input
+            targetSpan.textContent = userInput;
+           
+            target = userInput;
+            syncBuffer();
+        } else {
+            // Handle invalid input (e.g., display an error message)
+            console.error("Invalid input. Please enter a valid number.");
+        }
+    
+        // Clear the input field
+        targetInput.value = "";
+        }
+    });
+
     startSvg();
    
 
@@ -194,6 +220,7 @@ var nowTime;
 var tweenOffset = 0;
 var catchUpTime = 0;
 var timeDiff = 0;
+var syncRange = 500;
 
 function gameLoop(){
     nowTime = Date.now();
@@ -214,19 +241,19 @@ function gameLoop(){
         tweenIndex = 0;
 
         updateWorldModelWithKey(forwardBuffer[keyFrameIndex]);
-        updateSvg(worldModel, screen_width, screen_height);
+        // updateSvg(worldModel, screen_width, screen_height);
         lastKeyTime = nowTime;
         lastTweenTime = nowTime;
  
         if (forwardBuffer[keyFrameIndex] && forwardBuffer[keyFrameIndex].tweens) {
-            timeToNextTween = forwardBuffer[keyFrameIndex].tweens[0].game_time - forwardBuffer[keyFrameIndex].game_time - tweenOffset - catchUpTime;
+            timeToNextTween = forwardBuffer[keyFrameIndex].tweens[0].game_time - forwardBuffer[keyFrameIndex].game_time - catchUpTime;
           } else {
             timeToNextTween = Math.floor(1000/tween_rate);
           }
-        let syncRange = 500;
+        // let syncRange = 500;
         if (forwardBuffer.length > 2 && Math.abs(timeDiff-target) >= syncRange){
             //TODO: Check for end frame
-            // console.log("Syncing!")
+            console.log("Need Syncing!")
             // syncBuffer();
         }
         //console.log("index ", keyFrameIndex, ": ", forwardBuffer[keyFrameIndex]);
@@ -244,24 +271,16 @@ function gameLoop(){
 
         updateWorldModelWithTween(forwardBuffer[keyFrameIndex-1].tweens[tweenIndex]);
         lastTweenTime = nowTime;
-        updateSvg(worldModel, screen_width, screen_height);
+        // updateSvg(worldModel, screen_width, screen_height);
         if(forwardBuffer[keyFrameIndex-1].tweens[tweenIndex+1]){
-            timeToNextTween = forwardBuffer[keyFrameIndex-1].tweens[tweenIndex+1].game_time - forwardBuffer[keyFrameIndex-1].tweens[tweenIndex].game_time - tweenOffset - catchUpTime;
+            timeToNextTween = forwardBuffer[keyFrameIndex-1].tweens[tweenIndex+1].game_time - forwardBuffer[keyFrameIndex-1].tweens[tweenIndex].game_time - catchUpTime;
         }
         else{
-            timeToNextTween = Math.floor(1000/tween_rate) - tweenOffset;
+            timeToNextTween = Math.floor(1000/tween_rate);
         }
         tweenIndex++;
     }
+    updateSvg(worldModel, screen_width, screen_height);
     window.requestAnimationFrame(gameLoop);
 }
 
-function incrementTargetOffset(){
-    target+=5;
-    document.getElementById("target").innerHTML = target;
-}
-
-function decrementTargetOffset(){
-    target-=5;
-    document.getElementById("target").innerHTML = target;
-}
