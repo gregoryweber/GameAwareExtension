@@ -16,6 +16,7 @@ var currentEnemyArray = [];
 let globalWorldModel;
 
 let isLiveDialog = true;
+let noKeydown = true;
 var dialogArray = [];
 var newDialog = "";
 var dialogArrayIndex = 0;
@@ -39,6 +40,7 @@ function startSvg() {
     document.getElementById("language-select").addEventListener("change", changeLanguage);
     
     document.getElementById("dialogCheckbox").addEventListener("change", changeDialogSettings);
+    document.getElementById("keyboard").addEventListener("change", changeKeyboardSettings);
     document.getElementById("previous-dialogue-button").addEventListener("click", previousDialogArray);
     document.getElementById("next-dialogue-button").addEventListener("click", advanceDialogArray);
 
@@ -302,18 +304,29 @@ function changeDialogSettings(){
   }
 }
 
+function changeKeyboardSettings() {
+  noKeydown = !noKeydown
+  console.log("noKeydown",noKeydown)
+}
+
 function dialogueNotification(){
   let nextButton = document.getElementById("next-dialogue-button")
     if(dialogArrayIndex == dialogArray.length-1){
       nextButton.style.backgroundColor = '#FFFFFF';
+      nextButton.getElementsByClassName('notification')[0].classList.add("hidden")
+      nextButton.setAttribute("aria-label","Next dialogue")
     } else {
       nextButton.style.backgroundColor = '#FF0000';
+      nextButton.getElementsByClassName('notification')[0].classList.remove("hidden")
+      nextButton.setAttribute("aria-label","Next dialogue, has new dialogue")
     }
 }
 
 window.addEventListener('keydown', function (e) {
   console.log(e.key)
-
+  if (noKeydown) {
+    return
+  }
   function keyToFunction(key, func) {
     if (e.key == key) {
       func();
@@ -323,6 +336,7 @@ window.addEventListener('keydown', function (e) {
   keyToFunction("=", increaseFontSize)
   keyToFunction("ArrowLeft", previousDialogArray) 
   keyToFunction("ArrowRight", advanceDialogArray)
+
 }, false);
 
 let dialogueChoices  = document.getElementById("choices_container");
@@ -422,6 +436,7 @@ function updateSVGBloomwoodElements(worldModel, screen_width, screen_height){
     width = (value["screenRect"].w / screen_width) * 100;
     height = (value["screenRect"].h / screen_height) * 100;
 
+    // we should be using native HTML for text, since foreignObject in SVG is inaccessible to screen readers
     var dialogueContainer = document.getElementById("dialogue_container");
     dialogueContainer.setAttribute("width", width.toString() + "%");
     dialogueContainer.setAttribute("height", height.toString() + "%");
