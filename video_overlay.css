@@ -6,22 +6,14 @@
   font-size: 12px;
 }
 
-#targetSetting {
+.container {
   position: fixed;
-  bottom: 5%;
+  bottom: 0;
   right: 0;
   padding: 5px;
+  text-align: center;
   background-color: rgba(192, 192, 192, 0.5);
 }
-
-/* Set elements to display block to stack them vertically */
-#targetSetting h3,
-#targetSetting input,
-#targetSetting label {
-  display: block;
-  margin-bottom: 10px; /* Add spacing between elements if needed */
-}
-
 #plus, #minus{
   margin-bottom: 30px;
 }
@@ -60,28 +52,39 @@ svg svg {
 }
 
 #accessibility_container {
-  position: absolute;
-  top: 20vh;
-  left: 0.1vw; /* Adjust the left position as needed */
-  height: 70vh; /* Set the height to 100% of the viewport height */
-  width: 13vw;
+  position: fixed;
+  top: 0.1vh; /* Align to the top */
+  left: 0; /* Align to the left */
+  padding: 2%;
+  height: 100vh; /* Full height of the viewport */
   background-color: rgba(192, 192, 192, 0.5);
   display: flex;
+  flex-direction: column; /* Stack children vertically */
+  justify-content: flex-start; /* Align children to the start (top) */
+  align-items: flex-start; /* Align children to the start (left) */
+  width: auto; /* Adjust the width as needed */
 }
 
 #accessibility_buttons {
   display: flex;
-  flex-direction: column; /* Stack buttons vertically */
-  justify-content: space-between; /* Distribute buttons evenly */
+  flex-direction: column; /* Stack children vertically */
+  justify-content: space-between; /* Spread elements evenly */
+  height: 80%; /* Take up the full height of the container */
+  padding: 2%; /* Adjust padding as needed */
 }
 
-/* #previous-dialog-button,
+#previous-dialog-button,
 #next-dialog-button {
   
   position: absolute;
-} */
+}
 
-
+@media screen and (max-width: 768px) {
+  #previous-dialog-button,
+  #next-dialog-button {
+    margin: 2px 0; /* Adjust the margin as needed for smaller screens */
+  }
+}
 
 /* Adjust font size and padding for better readability and appearance */
 #font_size,
@@ -91,23 +94,24 @@ svg svg {
 #decrease-font-size-button,
 #font-color-select,
 #font-type-select,
-#language-select {
+#language-select,
+#dialogCheckbox {
   font-size: 0.9vw;
   padding: 0.5em 1em;
   margin-right: 1vw;
-  width:100%
 }
 
 #plus_button,
 #minus_button {
-  font-size: 0.8vw;
+  font-size: 0.9vw;
   padding:0.5em 1em;
   margin: 0 0.5em;
-  padding: 5px;
-  border-radius: 5px;
+  /* padding: 5px; */
+  /* border-radius: 5px; */
   background-color: #ccc;
   cursor: pointer;
 }
+/* Your existing CSS styles above */
 
 #plus_button:hover,
 #minus_button:hover,
@@ -119,9 +123,12 @@ svg svg {
 #font-color-select {
   display: flex;
   align-items: center;
-  font-size: 0.8vw;
 }
 
+#font-type-select {
+  display: flex;
+  align-items: center;
+}
 #font-type-select {
   display: flex;
   align-items: center;
