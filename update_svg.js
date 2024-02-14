@@ -25,13 +25,13 @@ let enableScreenRects = true; // Default value based on checkbox being initially
 
 
 function startSvg() {
-    parentSvgDebug = document.getElementById("parent_svg_debug");
-    parentSvgMaze = document.getElementById("parent_svg_maze");
-    parentSvgTowerDefense = document.getElementById("parent_svg_tower_defense");
+    // parentSvgDebug = document.getElementById("parent_svg_debug");
+    // parentSvgMaze = document.getElementById("parent_svg_maze");
+    // parentSvgTowerDefense = document.getElementById("parent_svg_tower_defense");
     parentSvgBloomwood = document.getElementById("parent_svg_bloomwood");
-    document.getElementById("debugCheckbox").addEventListener("change", changeOverlay);
-    document.getElementById("mazeCheckbox").addEventListener("change", changeOverlay);
-    document.getElementById("towerDefenseCheckbox").addEventListener("change", changeOverlay);
+    // document.getElementById("debugCheckbox").addEventListener("change", changeOverlay);
+    // document.getElementById("mazeCheckbox").addEventListener("change", changeOverlay);
+    // document.getElementById("towerDefenseCheckbox").addEventListener("change", changeOverlay);
     document.getElementById("bloomwoodCheckbox").addEventListener("change", changeOverlay);
     document.getElementById("increase-font-size-button").addEventListener("click", increaseFontSize);
     document.getElementById("decrease-font-size-button").addEventListener("click", decreaseFontSize);
@@ -44,11 +44,11 @@ function startSvg() {
     document.getElementById("previous-dialogue-button").addEventListener("click", previousDialogArray);
     document.getElementById("next-dialogue-button").addEventListener("click", advanceDialogArray);
 
-    const screenRectVisibleCheckbox = document.querySelector('input[value="colored"]');
+    // const screenRectVisibleCheckbox = document.querySelector('input[value="colored"]');
     // Add an event listener to the checkbox to update the boolean variable
-    screenRectVisibleCheckbox.addEventListener("change", function () {
-      enableScreenRects = screenRectVisibleCheckbox.checked;
-    });
+    // screenRectVisibleCheckbox.addEventListener("change", function () {
+    //   enableScreenRects = screenRectVisibleCheckbox.checked;
+    // });
     svgDebugElements = {};
     svgMazeElements = {};
     svgTowerDefenseElements = {};
@@ -57,51 +57,52 @@ function startSvg() {
 }
 
 function changeOverlay(){
-    const debugCheckbox = document.querySelector('input[value="debug"]');
-    const mazeCheckbox = document.querySelector('input[value="maze"]');
-    const towerDefenseCheckbox = document.querySelector('input[value="tower_defense"]');
+    // const debugCheckbox = document.querySelector('input[value="debug"]');
+    // const mazeCheckbox = document.querySelector('input[value="maze"]');
+    // const towerDefenseCheckbox = document.querySelector('input[value="tower_defense"]');
     const bloomwoodCheckbox = document.querySelector('input[value="bloomwood"]');
 
   
-    // Toggle the visibility of all the selected overlays
-    isDebugVisible = debugCheckbox.checked;
-    isMazeVisible = mazeCheckbox.checked;  
-    isTowerDefenseVisible = towerDefenseCheckbox.checked;  
+    // // Toggle the visibility of all the selected overlays
+    // isDebugVisible = debugCheckbox.checked;
+    // isMazeVisible = mazeCheckbox.checked;  
+    // isTowerDefenseVisible = towerDefenseCheckbox.checked;  
     isBloomwoodVisible = bloomwoodCheckbox.checked;
 
 }
 
-var s_width = 0;
-var s_height = 0;
+let s_width = 0;
+let s_height = 0;
 function updateSvg(worldModel, screen_width, screen_height){
   s_width = screen_width;
   s_height = screen_height;
+  console.log(s_width);
     globalWorldModel = worldModel;
-    if(isDebugVisible){
-        document.getElementById("parent_svg_debug").style.visibility = "visible";
-        document.getElementById("targetSetting").style.visibility = "visible";
-        updateSvgDebug(worldModel, screen_width, screen_height);
-    }
-    else{
-        document.getElementById("parent_svg_debug").style.visibility = "hidden";
-        document.getElementById("targetSetting").style.visibility = "hidden";
-    }
-    if(isMazeVisible){
-        document.getElementById("parent_svg_maze").style.visibility = "visible";
-        updateSvgMaze(worldModel, screen_width, screen_height);
-    }
-    else{
-        document.getElementById("parent_svg_maze").style.visibility = "hidden";
-    }
-    if(isTowerDefenseVisible){
-        document.getElementById("parent_svg_tower_defense").style.visibility = "visible";
-        document.getElementById("upcoming_enemy_container").style.visibility = "visible";
-        updateSVGTowerDefenseElements(worldModel, screen_width, screen_height);
-    }
-    else{
-        document.getElementById("parent_svg_tower_defense").style.visibility = "hidden";
-        document.getElementById("upcoming_enemy_container").style.visibility = "hidden";
-    }
+    // if(isDebugVisible){
+    //     document.getElementById("parent_svg_debug").style.visibility = "visible";
+    //     document.getElementById("targetSetting").style.visibility = "visible";
+    //     updateSvgDebug(worldModel, screen_width, screen_height);
+    // }
+    // else{
+    //     document.getElementById("parent_svg_debug").style.visibility = "hidden";
+    //     document.getElementById("targetSetting").style.visibility = "hidden";
+    // }
+    // if(isMazeVisible){
+    //     document.getElementById("parent_svg_maze").style.visibility = "visible";
+    //     updateSvgMaze(worldModel, screen_width, screen_height);
+    // }
+    // else{
+    //     document.getElementById("parent_svg_maze").style.visibility = "hidden";
+    // }
+    // if(isTowerDefenseVisible){
+    //     document.getElementById("parent_svg_tower_defense").style.visibility = "visible";
+    //     document.getElementById("upcoming_enemy_container").style.visibility = "visible";
+    //     updateSVGTowerDefenseElements(worldModel, screen_width, screen_height);
+    // }
+    // else{
+    //     document.getElementById("parent_svg_tower_defense").style.visibility = "hidden";
+    //     document.getElementById("upcoming_enemy_container").style.visibility = "hidden";
+    // }
     // isBloomwoodVisible = worldModel["key"].visualNovelText != undefined
     if (isBloomwoodVisible && worldModel["key"].visualNovelText != undefined) {
       document.getElementById("accessibility_container").style.visibility = "visible";
@@ -347,7 +348,7 @@ function createDialogueChoiceSvg(){
   let width = 0;
   let height = 0;
   let choiceSvg;
-console.log(dialogArray[dialogArrayIndex]["currentChoices"])
+  console.log(dialogArray[dialogArrayIndex]["currentChoices"])
   // Delete all previous dialogue choices
   while (dialogueChoices.firstChild) {
     dialogueChoices.removeChild(dialogueChoices.firstChild);
