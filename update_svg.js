@@ -29,9 +29,11 @@ function startSvg() {
     parentSvgMaze = document.getElementById("parent_svg_maze");
     parentSvgTowerDefense = document.getElementById("parent_svg_tower_defense");
     parentSvgBloomwood = document.getElementById("parent_svg_bloomwood");
-    // document.getElementById("debugCheckbox").addEventListener("change", changeOverlay);
-    // document.getElementById("mazeCheckbox").addEventListener("change", changeOverlay);
-    // document.getElementById("towerDefenseCheckbox").addEventListener("change", changeOverlay);
+    
+    document.getElementById("debugCheckbox").addEventListener("change", changeOverlay);
+    document.getElementById("mazeCheckbox").addEventListener("change", changeOverlay);
+    document.getElementById("towerDefenseCheckbox").addEventListener("change", changeOverlay);
+
     document.getElementById("bloomwoodCheckbox").addEventListener("change", changeOverlay);
     document.getElementById("increase-font-size-button").addEventListener("click", increaseFontSize);
     document.getElementById("decrease-font-size-button").addEventListener("click", decreaseFontSize);
@@ -57,16 +59,17 @@ function startSvg() {
 }
 
 function changeOverlay(){
-    // const debugCheckbox = document.querySelector('input[value="debug"]');
-    // const mazeCheckbox = document.querySelector('input[value="maze"]');
-    // const towerDefenseCheckbox = document.querySelector('input[value="tower_defense"]');
+    const debugCheckbox = document.querySelector('input[value="debug"]');
+    const mazeCheckbox = document.querySelector('input[value="maze"]');
+    const towerDefenseCheckbox = document.querySelector('input[value="tower_defense"]');
     const bloomwoodCheckbox = document.querySelector('input[value="bloomwood"]');
 
   
     // Toggle the visibility of all the selected overlays
-    // isDebugVisible = debugCheckbox.checked;
-    // isMazeVisible = mazeCheckbox.checked;  
-    // isTowerDefenseVisible = towerDefenseCheckbox.checked;  
+    isDebugVisible = debugCheckbox.checked;
+    isMazeVisible = mazeCheckbox.checked;  
+    isTowerDefenseVisible = towerDefenseCheckbox.checked;  
+
     isBloomwoodVisible = bloomwoodCheckbox.checked;
 
 }
@@ -102,7 +105,6 @@ function updateSvg(worldModel, screen_width, screen_height){
         document.getElementById("parent_svg_tower_defense").style.visibility = "hidden";
         document.getElementById("upcoming_enemy_container").style.visibility = "hidden";
     }
-    // isBloomwoodVisible = worldModel["key"].visualNovelText != undefined
     if (isBloomwoodVisible && worldModel["key"].visualNovelText != undefined) {
       document.getElementById("accessibility_container").style.visibility = "visible";
       document.getElementById("parent_svg_bloomwood").style.visibility = "visible";
