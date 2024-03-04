@@ -14,6 +14,156 @@
   text-align: center;
   background-color: rgba(192, 192, 192, 0.5);
 }
-button{
+#plus, #minus{
   margin-bottom: 30px;
+}
+
+.extension-options {
+  position: relative;
+  z-index: 1000;
+  top: 0;
+  left: 0;
+  right: 0;
+  padding: 3px;
+  text-align: center;
+  background-color: rgba(192, 192, 192, 0.5);
+  display: flex;
+  justify-content: center; /* Center the items horizontally */
+}
+
+svg {
+  position: absolute; 
+  top: 0; 
+  left: 0; 
+  width: 100%; 
+  height: 100%;
+}
+
+svg svg {
+  position: absolute;
+}
+#upcoming_enemy_container {
+  position: absolute;
+  top: 12%;
+  right: 0;
+  width: 20%;
+  height: 65%;
+  visibility: hidden;
+}
+
+#accessibility_container {
+  position: fixed;
+  top: 0.1vh; /* Align to the top */
+  left: 0; /* Align to the left */
+  padding: 2%;
+  height: 100vh; /* Full height of the viewport */
+  background-color: rgba(192, 192, 192, 0.5);
+  display: flex;
+  flex-direction: column; /* Stack children vertically */
+  justify-content: flex-start; /* Align children to the start (top) */
+  align-items: flex-start; /* Align children to the start (left) */
+  width: auto; /* Adjust the width as needed */
+}
+
+#accessibility_buttons {
+  display: flex;
+  flex-direction: column; /* Stack children vertically */
+  justify-content: space-between; /* Spread elements evenly */
+  height: 80%; /* Take up the full height of the container */
+  padding: 2%; /* Adjust padding as needed */
+}
+
+#previous-dialog-button,
+#next-dialog-button {
+  
+  position: absolute;
+}
+
+@media screen and (max-width: 768px) {
+  #previous-dialog-button,
+  #next-dialog-button {
+    margin: 2px 0; /* Adjust the margin as needed for smaller screens */
+  }
+}
+
+/* Adjust font size and padding for better readability and appearance */
+#font_size,
+#font_color,
+#font_type,
+#increase-font-size-button,
+#decrease-font-size-button,
+#font-color-select,
+#font-type-select,
+#language-select,
+#dialogCheckbox {
+  font-size: 0.9vw;
+  padding: 0.5em 1em;
+  margin-right: 1vw;
+}
+
+#plus_button,
+#minus_button {
+  font-size: 0.9vw;
+  padding:0.5em 1em;
+  margin: 0 0.5em;
+  /* padding: 5px; */
+  /* border-radius: 5px; */
+  background-color: #ccc;
+  cursor: pointer;
+}
+/* Your existing CSS styles above */
+
+#plus_button:hover,
+#minus_button:hover,
+#font-color-select:hover,
+#font-type-select:hover {
+  background-color: #aaa;
+}
+
+#font-color-select {
+  display: flex;
+  align-items: center;
+}
+
+#font-type-select {
+  display: flex;
+  align-items: center;
+}
+#font-type-select {
+  display: flex;
+  align-items: center;
+  font-size: 0.8vw;
+}
+#dialogue-browsing-buttons{
+  display: flex;
+  flex-direction: row;
+  /* justify-content: space-evenly; */
+}
+.dropdowns label{
+  background-color: darkgray;
+}
+
+h2 {
+  font-size: 1em;
+  margin-block-start: 0;
+  margin-block-end: 0;
+}
+
+#next-dialogue-button {
+  position: relative;
+}
+
+.notification {
+  width: 8px;
+  height: 8px;
+  position: absolute;
+  background: radial-gradient(ellipse at 70% 30%, #ffffff 0%, black 65%);
+  border-radius: 4px;
+  top: -4px;
+  right: -4px;
+  border: 1px solid white;
+}
+
+.hidden {
+  display: none;
 }
