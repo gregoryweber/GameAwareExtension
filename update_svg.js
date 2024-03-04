@@ -76,7 +76,6 @@ let s_height = 0;
 function updateSvg(worldModel, screen_width, screen_height){
   s_width = screen_width;
   s_height = screen_height;
-  console.log(s_width);
     globalWorldModel = worldModel;
     // if(isDebugVisible){
     //     document.getElementById("parent_svg_debug").style.visibility = "visible";
@@ -361,6 +360,10 @@ function createDialogueChoiceSvg(){
       yOffset = (choice["screenRect"].y / s_height) * 100;
       width = (choice["screenRect"].w / s_width) * 100;
       height = (choice["screenRect"].h / s_height) * 100;
+      console.log("xoff" + xOffset);
+      console.log("yoff" + yOffset);
+      console.log("width" + width);
+      console.log("height" + height);
 
       // Create a new SVG 
       choiceSvg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
