@@ -3,9 +3,6 @@ export class TwitchService {
     constructor(twitch) {
       this.twitch = twitch;
       this.broadcastLatency = null;
-      //console.log(twitch); // Check the twitch object
-      //const twitchService = new TwitchService(twitch);
-
     }
   
     onContext(callback) {
@@ -23,4 +20,3 @@ export class TwitchService {
         return this.broadcastLatency;
     }
   }
-//  module.exports = { TwitchService };
