@@ -124,6 +124,8 @@ function updateSvg(worldModel, screen_width, screen_height){
     }
 }
 
+let objectsSelectable = new Map();
+
 function updateSvgDebug(worldModel, screen_width, screen_height){
     let xOffset = 0;
     let yOffset = 0;
@@ -177,8 +179,17 @@ function updateSvgDebug(worldModel, screen_width, screen_height){
             else{
               svgRect.removeAttribute("stroke");
             }
+            if (objectsSelectable.has(key) && objectsSelectable.get(key) != value["isSelectable"]) {
+              objectsSelectable.set(key, value["isSelectable"]);
+              svgRect.addEventListener("click", (evt) => {
+                  console.log(key, value["isSelectable"])
+                  console.log("Found an Object!!!");
+              });
+            }
         }
         else{
+            objectsSelectable.set(key, false);
+
             svgRect = document.createElementNS(
                 "http://www.w3.org/2000/svg",
                 "rect"
@@ -248,7 +259,7 @@ function updateSvgDebug(worldModel, screen_width, screen_height){
             });            
             svgRect.addEventListener("mouseout", () => {
                 gElement.setAttribute("visibility", "hidden");
-                console.log("mouse out");
+                // console.log("mouse out");
             });
             svgRect.addEventListener("click", (evt) => {
                 evt.target.setAttribute("stroke", getRandomColor());
@@ -328,7 +339,7 @@ function dialogueNotification(){
 }
 
 window.addEventListener('keydown', function (e) {
-  console.log(e.key)
+  // console.log(e.key)
   if (noKeydown) {
     return
   }

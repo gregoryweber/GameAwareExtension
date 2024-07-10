@@ -48,7 +48,9 @@ exports.getInitialBuffer = async(req, res) => {
         if (latestData) {
             const latestIndex = latestData.frame;
             if (latestIndex) {
-                const range = [...Array(latestIndex - (latestIndex - padding) + 1).keys()].map(x => String(x + (latestIndex - padding)));
+                // Get an array of a padding amount of frame indices starting at 
+                // whatever the latestIndex is minus padding. Just the initial buffer.
+                const range = [...Array(padding + 1).keys()].map(x => String(x + (latestIndex - padding)));
                 let initialBuffer = await redisClient.fetchFrames(range);
                 res.send(initialBuffer.map(item => JSON.parse(item)));
             } else {

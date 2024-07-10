@@ -35,9 +35,13 @@ async function getStartData(){
         const res = await dataService.getStartData();
 
         if (res) {
+            // time from the start of the game to the system start in milliseconds
             startGameSecs = res.game_time;
+            // current clock date when the system starts on the streamer's computer 
             startClockSecs = res.clock_mills;
+            // amount of key frames in a second (should be 1)
             keyRate = res.key_frame_rate;
+            // amount of tween frames in a key frame (should be 24)
             tweenRate = res.tween_frame_rate;
             screenWidth = res.screen_width;
             screenHeight = res.screen_height;
@@ -71,7 +75,7 @@ async function getLatestData(){
         const latestData = await dataService.getLatestData();
         if (latestData) {
             forwardBuffer.push(latestData);
-            //console.log("Latest data received and added to forward buffer:", latestData);
+            // console.log("Latest data received and added to forward buffer:", latestData);
         } else {
             console.error("Failed to receive latest data or received empty data.");
         }
@@ -95,7 +99,6 @@ function syncBuffer(){
     //broadcastLatency = number from Twitch, latency from the streamer to the viewer
     let dateNow = Date.now();
     let actualTime = dateNow - startClockSecs - startGameSecs - (broadcastLatency * 1000);
-
     
     actualKeyPointer = initialBuffer.length-1;
     // console.log('initialBuffer: ', initialBuffer[actualKeyPointer])
@@ -234,13 +237,15 @@ function gameLoop(){
         keyFrameIndex = Math.max(0, forwardBuffer.length-2);
         // console.log(forwardBuffer[keyFrameIndex])
         catchUpTime += nowTime-lastKeyTime-timeToNextKey;
-
+        
+        // NOTE: no difference between nowTime and dateNow....
         let dateNow = Date.now();
+
         let actualTime = dateNow - startClockSecs - startGameSecs - (broadcastLatency * 1000);
         // console.log(`dateNow: ${dateNow}, startClockSecs: ${startClockSecs}, startGameSecs: ${startGameSecs}, broadcastLatency: ${broadcastLatency}, game_time: ${forwardBuffer[keyFrameIndex].game_time}`)
         timeDiff = actualTime - forwardBuffer[keyFrameIndex].game_time
         // console.log(`time difference [${keyFrameIndex}/${forwardBuffer.length-1}]: ${timeDiff}`);
-
+        // console.log(forwardBuffer[keyFrameIndex])
         
         tweenIndex = 0;
 
@@ -257,7 +262,7 @@ function gameLoop(){
         // let syncRange = 500;
         if (forwardBuffer.length > 2 && Math.abs(timeDiff-target) >= syncRange){
             //TODO: Check for end frame
-            console.log("Need Syncing!")
+            // console.log("Need Syncing!")
             // syncBuffer();
         }
         //console.log("index ", keyFrameIndex, ": ", forwardBuffer[keyFrameIndex]);
