@@ -3,7 +3,8 @@ import { getRandomColor } from './svgUtils.js';
 var parentFindObjectsDebug;
 var svgFindObjectsElements = {};
 
-let objectsSelectable = new Map();
+const objectsSelectable = new Map();
+const foundObjects = new Map();
 
 function updateSvgFindObjects(worldModel, screen_width, screen_height){
   parentFindObjectsDebug = document.getElementById("parent_svg_find_objects");
@@ -30,11 +31,10 @@ function updateSvgFindObjects(worldModel, screen_width, screen_height){
             objectsSelectable.set(key, value["isSelectable"]);
             svgRect.addEventListener("click", (evt) => {
                 console.log(key, value["isSelectable"])
-                console.log("Found an Object!!!");
+                foundObjects.set(key, true);                
                 evt.target.setAttribute("stroke", getRandomColor());
+                svgRect.setAttribute("fill", "rgba(255, 255, 255, 0.5)");
             });
-            if (!svgRect.getAttribute("stroke"))
-              svgRect.setAttribute("stroke", "red");
           }
       }
       else{
