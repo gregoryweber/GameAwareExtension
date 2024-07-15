@@ -87,6 +87,7 @@ async function getLatestData(){
 }
 
 function syncBuffer(){
+    console.log("syncing!")
     let actualKeyPointer;
     let actualTweenPointer = 0;
     initialBuffer.push.apply(initialBuffer, forwardBuffer);
@@ -234,7 +235,8 @@ function gameLoop(){
 
 
     if(nowTime - lastKeyTime >= timeToNextKey && forwardBuffer[keyFrameIndex]){
-        keyFrameIndex = Math.max(0, forwardBuffer.length-2);
+        // Why -2? I changed to -1
+        keyFrameIndex = Math.max(0, forwardBuffer.length-1);
         // console.log(forwardBuffer[keyFrameIndex])
         catchUpTime += nowTime-lastKeyTime-timeToNextKey;
         
@@ -244,6 +246,10 @@ function gameLoop(){
         let actualTime = dateNow - startClockSecs - startGameSecs - (broadcastLatency * 1000);
         // console.log(`dateNow: ${dateNow}, startClockSecs: ${startClockSecs}, startGameSecs: ${startGameSecs}, broadcastLatency: ${broadcastLatency}, game_time: ${forwardBuffer[keyFrameIndex].game_time}`)
         timeDiff = actualTime - forwardBuffer[keyFrameIndex].game_time
+
+        // hmm, actualTime is a second ahead of game time... 
+
+        // console.log(`actualTime: ${actualTime} game time: ${forwardBuffer[keyFrameIndex].game_time}`)
         // console.log(`time difference [${keyFrameIndex}/${forwardBuffer.length-1}]: ${timeDiff}`);
         // console.log(forwardBuffer[keyFrameIndex])
         
