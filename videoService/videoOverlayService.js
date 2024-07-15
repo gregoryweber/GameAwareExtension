@@ -182,36 +182,8 @@ function updateWorldModelWithTween(tweenFrame){
 
 
 function startGameLoop(){
-    // Get references to the input field and the target span
-    const targetInput = document.getElementById("targetInput");
-    const targetSpan = document.getElementById("target");
-    targetSpan.innerHTML = target;
-    targetInput.value = target;
-    // Add an event listener to the input field to listen for Enter key presses
-    targetInput.addEventListener("keydown", function (event) {
-        if (event.key === "Enter") {
-        // Get the user's input from the input field
-        const userInput = parseInt(targetInput.value);
-    
-        // Check if the user's input is a valid number
-        if (!isNaN(userInput)) {
-            // Update the target span with the user's input
-            targetSpan.textContent = userInput;
-           
-            target = userInput;
-            syncBuffer();
-        } else {
-            // Handle invalid input (e.g., display an error message)
-            console.error("Invalid input. Please enter a valid number.");
-        }
-    
-        // Clear the input field
-        targetInput.value = "";
-        }
-    });
 
     startSvg();
-   
 
     lastKeyTime = 0;
     lastTweenTime = 0;
