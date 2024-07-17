@@ -42,7 +42,7 @@ async function getStartData(){
             // amount of key frames in a second (should be 1)
             keyRate = res.key_frame_rate;
             // amount of tween frames in a key frame (should be 24)
-            tweenRate = res.tween_frame_rate;
+            tweenRate = res.tween_frame_rate / keyRate;
             screenWidth = res.screen_width;
             screenHeight = res.screen_height;
 
@@ -236,7 +236,7 @@ function gameLoop(){
 
     if(nowTime - lastKeyTime >= timeToNextKey && forwardBuffer[keyFrameIndex]){
         // Why -2? I changed to -1
-        keyFrameIndex = Math.max(0, forwardBuffer.length-1);
+        keyFrameIndex = Math.max(0, forwardBuffer.length-2);
         // console.log(forwardBuffer[keyFrameIndex])
         catchUpTime += nowTime-lastKeyTime-timeToNextKey;
         
