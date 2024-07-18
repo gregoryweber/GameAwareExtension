@@ -8,5 +8,6 @@ router.get("/", dataController.helloWorld);
 router.get("/startData", dataController.getStartData);
 router.get("/latestData", dataController.getLatestData);
 router.get("/initialBuffer", dataController.getInitialBuffer);
+router.put("/viewerData", dataController.putViewerData);
 
 module.exports = router;

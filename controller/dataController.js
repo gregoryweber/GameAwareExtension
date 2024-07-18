@@ -64,3 +64,25 @@ exports.getInitialBuffer = async(req, res) => {
         res.status(500).send("Server error.");
     }
 };
+
+exports.putViewerData = async(req, res) => {
+    try {
+        const { viewerID, lastUpdate, viewerTime } = req.query;
+        const newViewerData = req.body; // Assuming the body contains the gameData JSON
+
+        const parsedLastUpdate = parseInt(lastUpdate);
+        const parsedViewerTime = parseInt(viewerTime);
+
+        await redisClient.updateViewerList(
+            viewerID,
+            parsedLastUpdate,
+            parsedViewerTime,
+            newViewerData
+        );
+        console.log(`new viewer data: ${viewerID}, lastUpdate: ${parsedLastUpdate}, viewerTime: ${parsedViewerTime}`);
+        console.log(newViewerData);
+    } catch (error) {
+        console.error("Error in putViewerData:", error);
+        res.status(500).send("Server error.");
+    }
+}

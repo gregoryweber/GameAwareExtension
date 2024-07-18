@@ -1,6 +1,6 @@
 import { TwitchService } from './twitchService.js';
 import { DataService } from './dataService.js';
-import {startSvg, updateSvg} from '../userInterfaceService/updateSvg.js';
+import { startSvg, updateSvg, gameData } from '../userInterfaceService/updateSvg.js';
 
 
 const twitchService = new TwitchService(window.Twitch.ext);
@@ -84,6 +84,15 @@ async function getLatestData(){
     }
 
 
+}
+
+async function putViewerData() {
+    try {
+        const viewerID = window.Twitch.ext.viewer.opaqueId;
+        await dataService.putViewerData(viewerID, worldModel["game_time"], Date.now(), gameData);
+    } catch (error) {
+        console.log(error);
+    }
 }
 
 function syncBuffer(){
@@ -267,7 +276,7 @@ function gameLoop(){
         }
         tweenIndex++;
     }
-    updateSvg(worldModel, screenWidth, screenHeight);
+    updateSvg(worldModel, screenWidth, screenHeight, putViewerData);
     window.requestAnimationFrame(gameLoop);
 }
 

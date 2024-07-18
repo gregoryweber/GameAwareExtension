@@ -1,10 +1,11 @@
-import { getRandomColor } from './svgUtils.js';
-
 var parentSvg;
 var svgFindObjectsElements = {};
 
 const objectsSelectable = new Map();
 const foundObjects = new Map();
+
+// the specific game data pertaining to the viewer that would like to be sent back
+const gameData = {};
 
 // runs on the start of the extension
 function startSvg() {
@@ -12,7 +13,8 @@ function startSvg() {
 }
 
 // runs on every animation frame of the extension
-function updateSvg(worldModel, screen_width, screen_height){
+function updateSvg(worldModel, screen_width, screen_height, updateCallback){
+
   parentSvg = document.getElementById("parent_svg");
 
   let xOffset = 0;
@@ -38,13 +40,17 @@ function updateSvg(worldModel, screen_width, screen_height){
             svgRect.addEventListener("click", (evt) => {
                 console.log(key, value["isSelectable"])
                 foundObjects.set(key, true);                
-                evt.target.setAttribute("stroke", getRandomColor());
                 svgRect.setAttribute("fill", "rgba(255, 255, 255, 0.5)");
+                gameData[key].selected = true;
+                console.log(`Game data length: ${Object.keys(gameData).length}`);
+                updateCallback();
             });
           }
       }
       else{
           objectsSelectable.set(key, false);
+
+          gameData[key] = {selected: false};
 
           svgRect = document.createElementNS(
               "http://www.w3.org/2000/svg",
@@ -74,9 +80,10 @@ function updateSvg(worldModel, screen_width, screen_height){
               parentSvg.removeChild(value);
           }
           delete svgFindObjectsElements[key];
+          delete gameData[key];
       }
   });
 
 }
 
-export { startSvg, updateSvg };
+export { gameData, startSvg, updateSvg };

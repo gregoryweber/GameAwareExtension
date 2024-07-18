@@ -53,8 +53,36 @@ async function fetchFrames(range){
   };
 }
 
+/**
+ * Structure of viewer list data :
+ * ViewerList : {
+ *  viewerId : {
+ *    lastUpdate = actual game time of current data
+ *    viewerTime = maybe viewerTime when this action happened
+ *    gameData : {
+ *      ... any game data here
+ *    }
+ *  }
+ * }
+ * @param {string} viewerID the viewer's ID
+ * @param {*} lastUpdate actual game time of current data
+ * @param {*} viewerTime the viewer's time when this action happened
+ * @param {*} newViewerData an object containing the game data pertaining to the viewer
+ */
+async function updateViewerList(viewerID, lastUpdate, viewerTime, newViewerData) {
+  const hashKey = "viewerList";
+
+  // Update the hash fields for the specific viewer
+  await client.hSet(hashKey, {
+    [`${viewerID}:lastUpdate`]: lastUpdate,
+    [`${viewerID}:viewerTime`]: viewerTime,
+    [`${viewerID}:gameData`]: JSON.stringify(newViewerData)
+  });
+}
+
 module.exports = {
     fetchLatestData,
     fetchStartData,
     fetchFrames,
+    updateViewerList
   };
