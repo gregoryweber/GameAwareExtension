@@ -89,7 +89,8 @@ async function getLatestData(){
 async function putViewerData() {
     try {
         const viewerID = window.Twitch.ext.viewer.opaqueId;
-        await dataService.putViewerData(viewerID, worldModel["game_time"], Date.now(), gameData);
+        const userID = window.Twitch.ext.viewer.id;
+        await dataService.putViewerData(viewerID, userID, worldModel["game_time"], Date.now(), gameData);
     } catch (error) {
         console.log(error);
     }
@@ -213,7 +214,6 @@ var syncRange = 500;
 
 function gameLoop(){
     nowTime = Date.now();
-
 
     if(nowTime - lastKeyTime >= timeToNextKey && forwardBuffer[keyFrameIndex]){
         // Why -2? I changed to -1

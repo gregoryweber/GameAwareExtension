@@ -69,13 +69,14 @@ async function fetchFrames(range){
  * @param {*} viewerTime the viewer's time when this action happened
  * @param {*} newViewerData an object containing the game data pertaining to the viewer
  */
-async function updateViewerList(viewerID, lastUpdate, viewerTime, newViewerData) {
+async function updateViewerList(viewerID, userID, lastUpdate, viewerTime, newViewerData) {
   const hashKey = "viewerList";
 
   // Update the hash fields for the specific viewer
   await client.hSet(hashKey, {
     [`${viewerID}:lastUpdate`]: lastUpdate,
     [`${viewerID}:viewerTime`]: viewerTime,
+    [`${viewerID}:userID`]: userID,
     [`${viewerID}:gameData`]: JSON.stringify(newViewerData)
   });
 }

@@ -67,7 +67,7 @@ exports.getInitialBuffer = async(req, res) => {
 
 exports.putViewerData = async(req, res) => {
     try {
-        const { viewerID, lastUpdate, viewerTime } = req.query;
+        const { viewerID, userID, lastUpdate, viewerTime } = req.query;
         const newViewerData = req.body; // Assuming the body contains the gameData JSON
 
         const parsedLastUpdate = parseInt(lastUpdate);
@@ -75,6 +75,7 @@ exports.putViewerData = async(req, res) => {
 
         await redisClient.updateViewerList(
             viewerID,
+            userID,
             parsedLastUpdate,
             parsedViewerTime,
             newViewerData

@@ -36,10 +36,11 @@ export class DataService {
         return await response.json();
     }
 
-    async putViewerData(viewerID, lastUpdate, viewerTime, newViewerData) {
+    async putViewerData(viewerID, userID, lastUpdate, viewerTime, newViewerData) {
         // Create a URLSearchParams object
         const params = new URLSearchParams({
             viewerID: viewerID,
+            userID: userID,
             lastUpdate: lastUpdate,
             viewerTime: viewerTime
         });
