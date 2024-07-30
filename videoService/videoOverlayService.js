@@ -189,7 +189,7 @@ function updateWorldModelWithTween(tweenFrame){
     return true
 }
 
-
+var debugKeyframe = document.getElementById("debug_keyframe");
 
 function startGameLoop(){
 
@@ -216,8 +216,9 @@ function gameLoop(){
     nowTime = Date.now();
 
     if(nowTime - lastKeyTime >= timeToNextKey && forwardBuffer[keyFrameIndex]){
-        // Why -2? I changed to -1
-        keyFrameIndex = Math.max(0, forwardBuffer.length-1);
+        // TODO: this assumes that the keyframe is 1 !
+        keyFrameIndex = Math.max(0, forwardBuffer.length - Math.round(broadcastLatency/keyRate));
+        debugKeyframe.innerHTML = forwardBuffer[keyFrameIndex].frame;
         // console.log(forwardBuffer[keyFrameIndex])
         catchUpTime += nowTime-lastKeyTime-timeToNextKey;
         
@@ -247,7 +248,7 @@ function gameLoop(){
             timeToNextTween = Math.floor(1000/tweenRate);
           }
         // let syncRange = 500;
-        if (forwardBuffer.length > 2 && Math.abs(timeDiff-target) >= syncRange){
+        if (forwardBuffer.length > 2 && timeDiff >= syncRange){
             //TODO: Check for end frame
             // console.log("Need Syncing!")
             // syncBuffer();
