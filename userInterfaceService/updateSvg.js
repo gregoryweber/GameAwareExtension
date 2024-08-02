@@ -36,7 +36,7 @@ function updateSvg(worldModel, screen_width, screen_height, updateCallback){
           svgRect.setAttribute("x", xOffset.toString()+"%");
           svgRect.setAttribute("y", yOffset.toString()+"%");
           if (objectsSelectable.has(key) && objectsSelectable.get(key) != value["isSelectable"]) {
-            svgRect.setAttribute("stroke", "red");
+            // svgRect.setAttribute("stroke", "red");
             objectsSelectable.set(key, value["isSelectable"]);
             svgRect.addEventListener("click", (evt) => {
                 console.log(key, value["isSelectable"])

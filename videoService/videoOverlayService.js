@@ -217,7 +217,9 @@ function gameLoop(){
 
     if(nowTime - lastKeyTime >= timeToNextKey && forwardBuffer[keyFrameIndex]){
         // TODO: this assumes that the keyframe is 1 !
-        keyFrameIndex = Math.max(0, forwardBuffer.length - Math.round(broadcastLatency/keyRate));
+        keyFrameIndex = Math.max(0, forwardBuffer.length - Math.floor(broadcastLatency/keyRate));
+        if (keyFrameIndex == forwardBuffer.length)
+            keyFrameIndex = Math.max(0, forwardBuffer.length-1);
         debugKeyframe.innerHTML = forwardBuffer[keyFrameIndex].frame;
         // console.log(forwardBuffer[keyFrameIndex])
         catchUpTime += nowTime-lastKeyTime-timeToNextKey;
